@@ -1,0 +1,12 @@
+actions:
+  - id: multi_trigger_action
+    name: Multi Trigger Action
+    type: script
+    script: /tmp/test.sh
+    trigger:
+      event_types:
+        - alert.created
+        - alert.updated
+        - incident.created
+        - incident.updated
+    timeout: 30

@@ -1,0 +1,6 @@
+app:
+  name: ""  # Invalid empty name
+
+rootly:
+  api_url: ""  # Invalid empty URL
+  api_key: ""  # Invalid empty key

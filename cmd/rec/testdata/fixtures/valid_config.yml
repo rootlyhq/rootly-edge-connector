@@ -1,0 +1,24 @@
+app:
+  name: test-connector
+
+rootly:
+  api_url: https://api.rootly.com
+  api_key: rec_test_key_12345678
+
+poller:
+  polling_wait_interval_ms: 1000
+  max_number_of_messages: 10
+  visibility_timeout_sec: 30
+
+pool:
+  max_number_of_workers: 5
+  min_number_of_workers: 1
+  queue_size: 100
+
+logging:
+  level: info
+  format: json
+
+metrics:
+  enabled: true
+  port: 9090

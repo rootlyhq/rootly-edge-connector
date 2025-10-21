@@ -1,0 +1,163 @@
+# Rootly Edge Connector Actions Configuration
+# Copy this file to actions.yml and customize for your needs
+
+# Global defaults (optional)
+defaults:
+  timeout: 30
+  source_type: local
+  env:
+    ENVIRONMENT: production
+    LOG_LEVEL: info
+
+# Automatic actions - triggered by Rootly events
+# Event type is the key (1:1 mapping)
+# These run automatically, no user interaction
+on:
+  # Runs when new alerts are created
+  alert.created:
+    script: /opt/rootly-edge-connector/scripts/handle-alert.sh
+    parameters:
+      alert_id: "{{ id }}"
+      summary: "{{ summary }}"
+      severity: "{{ labels.severity }}"
+      host: "{{ data.host }}"
+      service: "{{ services[0].name }}"
+    timeout: 60
+
+  # Runs when alerts are updated
+  alert.updated:
+    http:
+      url: "https://your-webhook-url.com/alert-updated"
+      method: POST
+      headers:
+        Content-Type: application/json
+      body: |
+        {
+          "alert_id": "{{ id }}",
+          "status": "{{ status }}",
+          "summary": "{{ summary }}"
+        }
+
+  # Runs when new incidents are created
+  incident.created:
+    http:
+      url: "{{ env.SLACK_WEBHOOK_URL }}"
+      method: POST
+      headers:
+        Content-Type: application/json
+      body: |
+        {
+          "text": "🔥 Incident: {{ title }}",
+          "severity": "{{ severity.name }}",
+          "services": "{{ services | map: 'name' | join: ', ' }}"
+        }
+
+# Callable actions - triggered by users from Rootly UI
+# Action slug is the key
+# These appear as buttons in the UI
+callable:
+  # Standalone action (not tied to alert/incident)
+  clear_cache:
+    name: Clear Application Cache
+    description: Clear Redis or Memcached cache
+    script: /opt/rootly-edge-connector/scripts/clear-cache.sh
+    # trigger defaults to: action.triggered
+    parameter_definitions:
+      - name: cache_type
+        type: list
+        options: [redis, memcached, all]
+        default: redis
+        description: Which cache to clear
+      - name: scope
+        type: list
+        options: [global, regional]
+        default: global
+    # Auto-generated: cache_type, scope → {{ parameters.X }}
+    # Optionally add extras:
+    parameters:
+      triggered_by: "{{ triggered_by.email }}"
+    timeout: 45
+
+  # Action for alerts only
+  restart_service:
+    name: Restart Service
+    description: Restart a production service with graceful shutdown
+    trigger: alert.action_triggered  # Shows on alerts only
+    script: /opt/rootly-edge-connector/scripts/restart-service.sh
+    parameter_definitions:
+      - name: service_name
+        type: string
+        required: true
+        description: Name of the service to restart
+      - name: host
+        type: string
+        required: true
+        description: Target host
+      - name: force
+        type: boolean
+        default: false
+        description: Force restart without graceful shutdown
+    # Auto-generated: service_name, host, force → {{ parameters.X }}
+    # Only specify extras or custom mappings:
+    parameters:
+      alert_id: "{{ entity_id }}"
+      triggered_by: "{{ triggered_by.email }}"
+    timeout: 120
+
+  # Action for alerts (can also create similar one for incidents)
+  escalate:
+    name: Escalate Issue
+    description: Escalate to on-call engineer via PagerDuty
+    trigger: alert.action_triggered
+    http:
+      url: "https://api.pagerduty.com/incidents"
+      method: POST
+      headers:
+        Authorization: "Token token={{ env.PAGERDUTY_TOKEN }}"
+        Content-Type: application/json
+      body: |
+        {
+          "incident": {
+            "type": "incident",
+            "title": "{{ title | default: summary }}",
+            "urgency": "high"
+          }
+        }
+    parameter_definitions:
+      - name: message
+        type: string
+        required: true
+        description: Escalation message
+    timeout: 30
+
+  # Incident-only action with git source
+  run_playbook:
+    name: Run Incident Playbook
+    description: Execute Ansible playbook from Git repository
+    trigger: incident.action_triggered
+    source_type: git
+    script: playbooks/incident-response.yml
+    git_options:
+      url: "https://github.com/your-org/runbooks.git"
+      branch: main
+      poll_interval_sec: 300
+    parameter_definitions:
+      - name: playbook
+        type: list
+        options: [database, network, application]
+        required: true
+        description: Which playbook to run
+    # Auto-generated: playbook → {{ parameters.playbook }}
+    # Extras:
+    parameters:
+      incident_id: "{{ entity_id }}"
+      severity: "{{ severity.slug }}"
+    timeout: 600
+
+# Notes:
+# - Use absolute paths for local scripts
+# - Scripts receive parameters as REC_PARAM_* environment variables
+# - HTTP actions return status code as exit code (200-299 = success)
+# - Use {{ env.VAR }} to access environment variables
+# - All callable actions must have parameter_definitions to show in UI
+# - Automatic actions (on:) don't need parameter_definitions

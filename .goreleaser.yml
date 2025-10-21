@@ -1,0 +1,165 @@
+project_name: rootly-edge-connector
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: rootly-edge-connector
+    main: ./cmd/rec
+    binary: rootly-edge-connector
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+    goarch:
+      - amd64
+      - arm64
+      - arm
+      - "386"
+    # Exclude invalid combinations
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: darwin
+        goarch: "386"
+      - goos: windows
+        goarch: arm
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+    flags:
+      - -trimpath
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - config.example.yml
+      - actions.example.yml
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+nfpms:
+  - id: packages
+    package_name: rootly-edge-connector
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+    vendor: Rootly
+    homepage: https://github.com/rootlyhq/rootly-edge-connector
+    maintainer: Rootly <support@rootly.com>
+    description: |
+      Rootly Edge Connector enables execution of custom actions and automations
+      in response to Rootly alerts and incidents. It polls the Rootly API for
+      events, executes configured scripts or HTTP requests, and reports results back.
+    license: MIT
+
+    formats:
+      - rpm
+      - deb
+
+    # Additional files to include in the package
+    contents:
+      # Configuration files
+      - src: config.example.yml
+        dst: /etc/rootly-edge-connector/config.example.yml
+        type: config
+        file_info:
+          mode: 0644
+
+      - src: actions.example.yml
+        dst: /etc/rootly-edge-connector/actions.example.yml
+        type: config
+        file_info:
+          mode: 0644
+
+      # Systemd service file
+      - src: docs/rootly-edge-connector.service
+        dst: /usr/lib/systemd/system/rootly-edge-connector.service
+        type: config
+        file_info:
+          mode: 0644
+
+      # Documentation
+      - src: README.md
+        dst: /usr/share/doc/rootly-edge-connector/README.md
+        file_info:
+          mode: 0644
+
+      - src: LICENSE
+        dst: /usr/share/doc/rootly-edge-connector/LICENSE
+        file_info:
+          mode: 0644
+
+      # Create necessary directories
+      - dst: /opt/rootly-edge-connector/scripts
+        type: dir
+        file_info:
+          mode: 0755
+
+      - dst: /var/log/rootly-edge-connector
+        type: dir
+        file_info:
+          mode: 0755
+
+    # Scripts run during package lifecycle
+    scripts:
+      preinstall: scripts/package/preinstall.sh
+      postinstall: scripts/package/postinstall.sh
+      preremove: scripts/package/preremove.sh
+      postremove: scripts/package/postremove.sh
+
+    # RPM-specific configuration
+    rpm:
+      group: Applications/System
+      summary: Rootly Edge Connector for custom automations
+      compression: lzma
+
+    # Package-specific overrides
+    overrides:
+      rpm:
+        file_name_template: "{{ .ProjectName }}-{{ .Version }}.{{ .Arch }}.rpm"
+      deb:
+        file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}.deb"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Bug Fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Others
+      order: 999
+
+release:
+  github:
+    owner: rootlyhq
+    name: rootly-edge-connector
+  draft: false
+  prerelease: auto
+  name_template: "{{.ProjectName}} v{{.Version}}"

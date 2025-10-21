@@ -1,0 +1,44 @@
+# Rootly Edge Connector - Local Development Configuration
+# Copy this file to config.yml for local development with mock server
+
+app:
+  name: "rootly-edge-connector"
+
+rootly:
+  api_url: "http://host.docker.internal:3000"  # Local mock server (use host.docker.internal for Docker)
+                                                # Use http://localhost:3000 when running outside Docker
+  api_path: "/rec/v1"                           # API path prefix for mock server
+  api_key: "test-key"                           # Any value works for local testing
+
+poller:
+  polling_wait_interval_ms: 1000    # Fast polling for local development (1 second)
+  visibility_timeout_sec: 10        # Short timeout for quick local testing
+  max_number_of_messages: 5         # Smaller batch for easier debugging
+  retry_on_error: true
+  retry_backoff: "exponential"
+  max_retries: 3
+
+pool:
+  max_number_of_workers: 3          # Fewer workers for local dev
+  min_number_of_workers: 1
+  queue_size: 50                    # Smaller queue for local testing
+  keep_alive_time_ms: 30000
+  monitoring_period_ms: 10000
+
+security:
+  script_timeout: 30                # Shorter timeout for local testing
+  allowed_script_paths: []          # Allow all paths for local dev (no restrictions)
+  global_env:
+    ENVIRONMENT: "development"
+    LOG_LEVEL: "debug"
+
+logging:
+  level: "trace"                    # Maximum verbosity for development (includes full request/response bodies)
+  format: "colored"                 # Colored output for easier reading
+  output: "stdout"                  # Always log to stdout in dev
+
+metrics:
+  enabled: false                    # Disabled for local dev (enable if testing metrics)
+  port: 9090                        # Prometheus metrics port
+  path: "/metrics"
+

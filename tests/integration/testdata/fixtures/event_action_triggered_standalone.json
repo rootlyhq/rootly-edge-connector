@@ -1,0 +1,22 @@
+{
+  "events": [
+    {
+      "id": "f117ac60-d00f-433c-9158-33c8f44c16c2",
+      "event_id": "c35d377d-42e2-4d13-a193-93fd2d5eb78c",
+      "event_type": "action.triggered",
+      "timestamp": "2025-10-28T13:30:17Z",
+      "data": {
+        "action_name": "clear_cache",
+        "parameters": {
+          "message": "Test message",
+          "severity": "info"
+        },
+        "triggered_by": {
+          "id": 50,
+          "name": "Quentin Rousseau",
+          "email": "quentin@rootly.com"
+        }
+      }
+    }
+  ]
+}

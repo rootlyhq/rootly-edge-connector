@@ -1,0 +1,11 @@
+{
+  "events": [
+    {
+      "id": "event-multi-1",
+      "event_id": "event-multi-456",
+      "event_type": "alert.created",
+      "timestamp": "2025-10-28T12:00:00Z",
+      "data": {}
+    }
+  ]
+}

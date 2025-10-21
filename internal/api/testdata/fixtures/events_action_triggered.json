@@ -1,0 +1,58 @@
+{
+  "events": [
+    {
+      "id": "delivery-action-1",
+      "event_id": "event-action-1",
+      "event_type": "alert.action_triggered",
+      "timestamp": "2025-10-26T21:40:00Z",
+      "data": {
+        "action_name": "restart_test_service",
+        "entity_id": "alert-uuid-123",
+        "parameters": {
+          "service_name": "api",
+          "environment": "production"
+        },
+        "triggered_by": {
+          "id": 50,
+          "name": "Quentin Rousseau",
+          "email": "quentin@rootly.com"
+        }
+      }
+    },
+    {
+      "id": "delivery-action-2",
+      "event_id": "event-action-2",
+      "event_type": "incident.action_triggered",
+      "timestamp": "2025-10-26T21:45:00Z",
+      "data": {
+        "action_name": "escalate",
+        "entity_id": "incident-uuid-456",
+        "parameters": {
+          "reason": "customer_impact"
+        },
+        "triggered_by": {
+          "id": 42,
+          "name": "Sarah Johnson",
+          "email": "sarah@example.com"
+        }
+      }
+    },
+    {
+      "id": "delivery-action-3",
+      "event_id": "event-action-3",
+      "event_type": "action.triggered",
+      "timestamp": "2025-10-26T21:50:00Z",
+      "data": {
+        "action_name": "clear_cache",
+        "parameters": {
+          "cache_type": "redis"
+        },
+        "triggered_by": {
+          "id": 50,
+          "name": "Quentin Rousseau",
+          "email": "quentin@rootly.com"
+        }
+      }
+    }
+  ]
+}

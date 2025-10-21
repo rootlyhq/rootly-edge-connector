@@ -1,0 +1,18 @@
+# This file tests that YAML silently overwrites duplicate keys
+# The duplicate key becomes a test of YAML behavior, not validation
+callable:
+  restart_server:
+    name: "First Definition"
+    http:
+      url: "https://example.com"
+      method: POST
+    parameter_definitions:
+      - name: test
+        type: string
+
+  restart_server:  # Duplicate key - YAML parser will overwrite above
+    name: "Second Definition"  # This one wins
+    script: /tmp/test.sh
+    parameter_definitions:
+      - name: test2
+        type: string

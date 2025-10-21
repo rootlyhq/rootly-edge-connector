@@ -1,0 +1,70 @@
+# Dockerfile.dev
+# Development Dockerfile for Rootly Edge Connector
+# Optimized for fast iteration and debugging
+
+FROM golang:1.24-alpine
+
+# Install development tools and runtime dependencies
+RUN apk update && \
+    apk add --no-cache \
+    bash \
+    git \
+    ca-certificates \
+    make \
+    curl \
+    && update-ca-certificates
+
+# Create non-root user (optional in dev, but good practice)
+RUN addgroup -S rootly && \
+    adduser -S rootly -G rootly
+
+# Setup directories
+RUN mkdir -p /opt/rootly-edge-connector/scripts && \
+    mkdir -p /etc/rootly-edge-connector && \
+    mkdir -p /var/log/rootly-edge-connector && \
+    chown -R rootly:rootly /opt/rootly-edge-connector && \
+    chown -R rootly:rootly /etc/rootly-edge-connector && \
+    chown -R rootly:rootly /var/log/rootly-edge-connector
+
+WORKDIR /app
+
+# Copy go mod files for dependency caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+# Note: In dev mode, you typically mount the source as a volume
+# But we copy it here as a fallback
+COPY . .
+
+# Copy dev configuration files
+COPY config.example.dev.yml /etc/rootly-edge-connector/config.yml
+COPY actions.example.dev.yml /etc/rootly-edge-connector/actions.yml
+
+# Copy test scripts to execution directory (they're already in /app/scripts from COPY . .)
+# Just make them executable
+RUN if [ -d /app/scripts ]; then \
+        cp /app/scripts/*.sh /opt/rootly-edge-connector/scripts/ && \
+        chmod +x /opt/rootly-edge-connector/scripts/*.sh; \
+    fi
+
+# Development environment variables
+ENV REC_CONFIG_PATH=/etc/rootly-edge-connector/config.yml
+ENV REC_ACTIONS_PATH=/etc/rootly-edge-connector/actions.yml
+ENV REC_LOG_LEVEL=trace
+ENV REC_LOG_FORMAT_TYPE=colored
+ENV CGO_ENABLED=0
+# Force color output in Docker
+ENV FORCE_COLOR=1
+ENV TERM=xterm-256color
+
+# Expose metrics port
+EXPOSE 9090
+
+# Health check (same as production but with colored logs consideration)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep -f "go run" || pgrep -f rootly-edge-connector || exit 1
+
+# Default: Run with go run for live reloading (rebuild required)
+# Override with docker-compose or docker run command for different modes
+CMD ["go", "run", "cmd/rec/main.go", "-config", "/etc/rootly-edge-connector/config.yml", "-actions", "/etc/rootly-edge-connector/actions.yml"]

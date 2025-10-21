@@ -1,0 +1,15 @@
+on:
+  alert.created:
+    script: /opt/scripts/restart.sh
+    parameters:
+      host: "{{ data.host }}"
+      service: "{{ services[0].name }}"
+    timeout: 60
+
+  incident.created:
+    http:
+      url: "https://example.com/webhook"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+    timeout: 10

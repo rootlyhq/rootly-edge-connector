@@ -1,0 +1,27 @@
+# Simple valid actions using HTTP (no file path validation)
+on:
+  alert.created:
+    http:
+      url: https://httpbin.org/post
+      method: POST
+      body: '{"alert_id": "{{ id }}"}'
+
+  incident.created:
+    http:
+      url: https://example.com/webhook
+      method: POST
+
+callable:
+  restart_service:
+    name: Restart Service
+    description: Restart a service
+    http:
+      url: https://example.com/restart
+      method: POST
+    parameter_definitions:
+      - name: service_name
+        type: string
+        required: true
+      - name: environment
+        type: string
+        required: false

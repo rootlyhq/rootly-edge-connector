@@ -1,0 +1,102 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.out
+coverage.html
+*.coverprofile
+profile.cov
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Build artifacts
+bin/
+dist/
+*.tar.gz
+*.zip
+
+# User-specific configuration files (examples are tracked)
+config.yml
+actions.yml
+config.dev.yml
+actions.dev.yml
+
+# Secrets and environment files
+.env
+.env.*
+environment
+*.key
+*.pem
+id_rsa
+id_ed25519
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Git repository cache (for git-based actions)
+.git-repos/
+repos/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor/IDE
+.idea/
+.vscode/
+.claude/
+*.iml
+.project
+.classpath
+.settings/
+*.sublime-*
+.fleet/
+
+# Debug and profiling
+__debug_bin
+*.pprof
+*.cpu
+*.mem
+
+# GoReleaser artifacts (dist/ already covered above)
+.goreleaser.*.yaml
+
+# macOS specific
+.AppleDouble
+.LSOverride
+
+# Windows specific
+$RECYCLE.BIN/
+
+# Linux specific
+.directory
+.Trash-*

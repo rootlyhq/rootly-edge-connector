@@ -1,0 +1,19 @@
+actions:
+  - id: test_script_action
+    name: Test Script Action
+    type: script
+    source_type: local
+    script: /tmp/test.sh
+    trigger:
+      event_type: alert.created
+    timeout: 30
+
+  - id: test_http_action
+    name: Test HTTP Action
+    type: http
+    trigger:
+      event_type: incident.created
+    http:
+      url: https://example.com/webhook
+      method: POST
+    timeout: 10

@@ -1,0 +1,36 @@
+{
+  "events": [
+    {
+      "id": "queue-123",
+      "event_id": "event-456",
+      "event_type": "alert.created",
+      "timestamp": "2025-10-28T12:00:00Z",
+      "data": {
+        "id": "alert-uuid-123",
+        "summary": "High database latency",
+        "status": "open",
+        "source": "datadog",
+        "labels": {
+          "severity": "critical"
+        },
+        "data": {
+          "host": "prod-db-01"
+        },
+        "services": [
+          {
+            "id": "svc-1",
+            "name": "Database",
+            "slug": "database"
+          }
+        ],
+        "environments": [
+          {
+            "id": "env-1",
+            "name": "Production",
+            "slug": "production"
+          }
+        ]
+      }
+    }
+  ]
+}

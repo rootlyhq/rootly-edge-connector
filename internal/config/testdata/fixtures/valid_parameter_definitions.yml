@@ -1,0 +1,45 @@
+callable:
+  comprehensive_action:
+    name: "Comprehensive Parameter Examples"
+    description: "Demonstrates all valid parameter types and configurations"
+    type: http
+    parameter_definitions:
+      # String type - free text input
+      - name: message
+        type: string
+        required: true
+        description: "Message to send"
+        default: "Hello World"
+
+      # Number type - numeric input
+      - name: count
+        type: number
+        required: false
+        description: "Number of retries"
+        default: 3
+
+      # Boolean type - checkbox
+      - name: enabled
+        type: boolean
+        required: false
+        description: "Enable feature"
+        default: true
+
+      # List type - dropdown with options
+      - name: environment
+        type: list
+        required: false
+        description: "Target environment"
+        default: "staging"
+        options: ["dev", "staging", "production"]
+
+      # List type - required with no default
+      - name: severity
+        type: list
+        required: true
+        description: "Alert severity level"
+        options: ["info", "warning", "critical"]
+    http:
+      url: "https://example.com/webhook"
+      method: POST
+    timeout: 30

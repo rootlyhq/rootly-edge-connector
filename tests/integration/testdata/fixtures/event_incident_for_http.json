@@ -1,0 +1,56 @@
+{
+  "events": [
+    {
+      "id": "queue-789",
+      "event_id": "event-012",
+      "event_type": "incident.created",
+      "timestamp": "2025-10-26T23:00:00Z",
+      "data": {
+        "id": "incident-uuid-789",
+        "sequential_id": 42,
+        "title": "Database outage",
+        "slug": "database-outage",
+        "summary": "Production database experiencing high latency",
+        "status": "started",
+        "kind": "normal",
+        "private": false,
+        "detected_at": "2025-10-26T22:58:00Z",
+        "acknowledged_at": null,
+        "started_at": "2025-10-26T22:58:00Z",
+        "mitigated_at": null,
+        "resolved_at": null,
+        "cancelled_at": null,
+        "created_at": "2025-10-26T22:59:00Z",
+        "updated_at": "2025-10-26T23:00:00Z",
+        "services": [
+          {
+            "id": "service-db-uuid",
+            "name": "Production Database",
+            "slug": "production-database"
+          }
+        ],
+        "environments": [
+          {
+            "id": "env-prod-uuid",
+            "name": "Production",
+            "slug": "production",
+            "color": "#E74C3C"
+          }
+        ],
+        "functionalities": [
+          {
+            "id": "func-uuid-1",
+            "name": "Database Access",
+            "slug": "database-access"
+          }
+        ],
+        "severity": {
+          "id": "sev-uuid-1",
+          "name": "SEV1",
+          "slug": "sev1",
+          "color": "#FF0000"
+        }
+      }
+    }
+  ]
+}

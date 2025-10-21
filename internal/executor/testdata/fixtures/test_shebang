@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "Shebang: $REC_PARAM_MESSAGE"

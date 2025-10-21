@@ -1,0 +1,28 @@
+actions:
+  - id: callable_action_with_params
+    name: Callable Action
+    type: http
+    trigger:
+      event_type: action.triggered
+    http:
+      url: https://example.com
+      method: POST
+    parameter_definitions:
+      - name: service_name
+        description: Name of the service to restart
+        required: true
+      - name: environment
+        description: Environment (prod, staging, dev)
+        required: false
+    timeout: 30
+
+  - id: another_callable
+    name: Another Callable
+    type: script
+    script: /tmp/script.sh
+    trigger:
+      event_type: action.triggered
+    parameter_definitions:
+      - name: param1
+        description: First parameter
+    timeout: 60

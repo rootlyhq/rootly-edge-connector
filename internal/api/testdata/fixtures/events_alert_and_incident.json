@@ -1,0 +1,95 @@
+{
+  "events": [
+    {
+      "id": "delivery-1",
+      "event_id": "event-1",
+      "event_type": "alert.created",
+      "timestamp": "2025-10-26T21:30:00Z",
+      "data": {
+        "id": "alert-uuid-1",
+        "source": "datadog",
+        "summary": "High database latency",
+        "status": "open",
+        "labels": {
+          "severity": "critical",
+          "component": "database"
+        },
+        "data": {
+          "host": "prod-db-01",
+          "latency_ms": 1500
+        },
+        "started_at": "2025-10-26T21:29:45Z",
+        "ended_at": null,
+        "created_at": "2025-10-26T21:29:50Z",
+        "updated_at": "2025-10-26T21:29:50Z",
+        "services": [
+          {
+            "id": "service-uuid-1",
+            "name": "DB - Production Database",
+            "slug": "db-production"
+          }
+        ],
+        "environments": [
+          {
+            "id": "env-uuid-1",
+            "name": "Production",
+            "slug": "production",
+            "color": "#E74C3C"
+          }
+        ]
+      }
+    },
+    {
+      "id": "delivery-2",
+      "event_id": "event-2",
+      "event_type": "incident.created",
+      "timestamp": "2025-10-26T21:35:00Z",
+      "data": {
+        "id": "incident-uuid-1",
+        "sequential_id": 42,
+        "title": "Production API Gateway Outage",
+        "slug": "production-api-gateway-outage",
+        "summary": "Complete outage affecting all customers",
+        "status": "started",
+        "kind": "normal",
+        "private": false,
+        "detected_at": "2025-10-26T21:33:00Z",
+        "acknowledged_at": null,
+        "started_at": "2025-10-26T21:34:00Z",
+        "mitigated_at": null,
+        "resolved_at": null,
+        "cancelled_at": null,
+        "created_at": "2025-10-26T21:34:30Z",
+        "updated_at": "2025-10-26T21:35:00Z",
+        "services": [
+          {
+            "id": "service-api-uuid",
+            "name": "API Gateway",
+            "slug": "api-gateway"
+          }
+        ],
+        "environments": [
+          {
+            "id": "env-prod-uuid",
+            "name": "Production",
+            "slug": "production",
+            "color": "#E74C3C"
+          }
+        ],
+        "functionalities": [
+          {
+            "id": "func-uuid-1",
+            "name": "API Requests",
+            "slug": "api-requests"
+          }
+        ],
+        "severity": {
+          "id": "sev-uuid-1",
+          "name": "SEV1",
+          "slug": "sev1",
+          "color": "#FF0000"
+        }
+      }
+    }
+  ]
+}

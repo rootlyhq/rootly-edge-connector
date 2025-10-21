@@ -1,0 +1,15 @@
+callable:
+  test_action:
+    name: "Test Action with Invalid Default"
+    type: http
+    parameter_definitions:
+      - name: environment
+        type: list
+        required: false
+        default: "invalid_value"  # Invalid - not in options
+        options: ["dev", "staging", "production"]
+        description: "Target environment"
+    http:
+      url: "https://example.com/webhook"
+      method: POST
+    timeout: 30

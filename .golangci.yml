@@ -1,0 +1,93 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment  # Disabled: memory savings minimal, readability more important
+
+  gofmt:
+    simplify: true
+
+  goimports:
+    local-prefixes: github.com/rootly/edge-connector
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  misspell:
+    locale: US
+
+  lll:
+    line-length: 120
+
+  nakedret:
+    max-func-lines: 30
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+linters:
+  enable:
+    - errcheck       # Check for unchecked errors
+    - gosimple       # Simplify code
+    - govet          # Vet examines Go source code (includes shadow check)
+    - ineffassign    # Detect ineffectual assignments
+    - staticcheck    # Advanced Go linter
+    - unused         # Check for unused code
+    - typecheck      # Type-check Go code
+    - gofmt          # Check if code is formatted
+    - goimports      # Check import statements
+    - misspell       # Find commonly misspelled words
+    - goconst        # Find repeated strings that could be constants
+    - unconvert      # Remove unnecessary type conversions
+    - unparam        # Find unused function parameters
+    - nakedret       # Find naked returns
+    - prealloc       # Find slice declarations that could be pre-allocated
+
+issues:
+  exclude-dirs:
+    - vendor
+    - bin
+
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - goconst
+
+    # Exclude shadowing warnings for common variable names
+    - linters:
+        - govet
+      text: "shadow: declaration of \"err\" shadows declaration"
+
+    # Exclude fieldalignment for complex Config and Action structs
+    # These are configuration structs where readability > memory optimization
+    - linters:
+        - govet
+      text: "type Config struct"
+    - linters:
+        - govet
+      text: "type Action struct"
+
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true

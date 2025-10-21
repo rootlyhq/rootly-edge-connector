@@ -1,0 +1,6 @@
+on:
+  alert.created:
+    http:
+      url: "https://example.com"
+      method: POST
+    timeout: 10

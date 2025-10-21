@@ -1,0 +1,8 @@
+actions:
+  - id: this_is_a_very_long_action_id_name_that_definitely_exceeds_the_31_character_limit_for_testing_truncation_in_display
+    name: Test Action
+    type: script
+    script: /tmp/test.sh
+    trigger:
+      event_type: this.is.a.very.long.trigger.event.type.name.that.exceeds.27.characters.for.truncation.testing
+    timeout: 30

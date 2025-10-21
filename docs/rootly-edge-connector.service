@@ -1,0 +1,43 @@
+[Unit]
+Description=Rootly Edge Connector
+Documentation=https://github.com/rootlyhq/rootly-edge-connector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rootly
+Group=rootly
+WorkingDirectory=/opt/rootly-edge-connector
+
+# Main command
+ExecStart=/opt/rootly-edge-connector/bin/rootly-edge-connector \
+    -config /etc/rootly-edge-connector/config.yml \
+    -actions /etc/rootly-edge-connector/actions.yml
+
+# Restart configuration
+Restart=on-failure
+RestartSec=10s
+
+# Environment
+Environment="REC_API_KEY="
+EnvironmentFile=-/etc/rootly-edge-connector/environment
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/rootly-edge-connector /opt/rootly-edge-connector/scripts
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rootly-edge-connector
+
+[Install]
+WantedBy=multi-user.target

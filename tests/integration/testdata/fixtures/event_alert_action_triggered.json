@@ -1,0 +1,19 @@
+{
+  "events": [
+    {
+      "id": "delivery-action-1",
+      "event_id": "event-action-1",
+      "event_type": "alert.action_triggered",
+      "timestamp": "2025-10-28T12:00:00Z",
+      "action": {
+        "id": "action-uuid-123",
+        "name": "Restart Service",
+        "slug": "restart_service"
+      },
+      "data": {
+        "action_name": "restart_service",
+        "entity_id": "alert-123"
+      }
+    }
+  ]
+}
