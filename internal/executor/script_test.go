@@ -805,6 +805,10 @@ func TestScriptRunner_IsAllowedPath_AbsErrorOnScriptPath(t *testing.T) {
 	// We trigger this by changing to a temp dir and then removing it
 	// This makes os.Getwd() fail, which causes filepath.Abs to fail for relative paths
 
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping on Windows - cannot remove directory while it's in use")
+	}
+
 	tmpDir := t.TempDir()
 	subDir := filepath.Join(tmpDir, "subdir")
 	err := os.Mkdir(subDir, 0755)
@@ -843,6 +847,11 @@ func TestScriptRunner_IsAllowedPath_AbsErrorOnScriptPath(t *testing.T) {
 
 func TestScriptRunner_IsAllowedPath_AbsErrorOnAllowedPath(t *testing.T) {
 	// Test isAllowedPath continue path when allowedPath.Abs fails (line 252)
+
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping on Windows - cannot remove directory while it's in use")
+	}
+
 	tmpDir := t.TempDir()
 	subDir := filepath.Join(tmpDir, "subdir")
 	scriptDir := filepath.Join(tmpDir, "scripts")
