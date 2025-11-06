@@ -138,3 +138,43 @@ docker-build: ## Build Docker image
 release: clean build-all ## Create a release (clean + build for all platforms)
 	@echo "Release $(VERSION) complete!"
 	@ls -lh $(BUILD_DIR)/
+
+# Version management targets
+# These targets manage semantic versioning using git tags
+.PHONY: version-patch version-minor version-major version-show version-next version-help
+
+version-show: ## Show current and next versions
+	@echo "Current version: $$(git describe --tags --abbrev=0 2>/dev/null || echo 'No tags found')"
+	@echo "Next patch: $$(scripts/bump-version.sh show patch)"
+	@echo "Next minor: $$(scripts/bump-version.sh show minor)"
+	@echo "Next major: $$(scripts/bump-version.sh show major)"
+
+version-patch: ## Bump patch version (1.2.3 → 1.2.4)
+	@scripts/bump-version.sh patch
+
+version-minor: ## Bump minor version (1.2.3 → 1.3.0)
+	@scripts/bump-version.sh minor
+
+version-major: ## Bump major version (1.2.3 → 2.0.0)
+	@scripts/bump-version.sh major
+
+version-next: ## Show next patch version
+	@scripts/bump-version.sh show patch
+
+version-help: ## Show detailed version help
+	@scripts/bump-version.sh help
+
+# Release targets - these create git tags which trigger CI releases
+.PHONY: release-patch release-minor release-major
+
+release-patch: version-patch ## Bump patch version and push tag (triggers CI release)
+	@echo "✅ Patch version bumped and tagged"
+	@echo "🚀 GitHub Actions will automatically build and publish the release"
+
+release-minor: version-minor ## Bump minor version and push tag (triggers CI release)
+	@echo "✅ Minor version bumped and tagged"
+	@echo "🚀 GitHub Actions will automatically build and publish the release"
+
+release-major: version-major ## Bump major version and push tag (triggers CI release)
+	@echo "✅ Major version bumped and tagged"
+	@echo "🚀 GitHub Actions will automatically build and publish the release"
