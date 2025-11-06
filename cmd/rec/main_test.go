@@ -196,6 +196,13 @@ func TestInitLogger_FileOutputWithRotation(t *testing.T) {
 		LocalTime:  false,
 	}
 
+	// Save original output to restore later
+	originalOutput := log.StandardLogger().Out
+	defer func() {
+		// Reset to original output to close lumberjack logger (fixes Windows cleanup)
+		log.SetOutput(originalOutput)
+	}()
+
 	err := initLogger(cfg)
 	require.NoError(t, err)
 
@@ -205,6 +212,9 @@ func TestInitLogger_FileOutputWithRotation(t *testing.T) {
 
 	// Verify file was created
 	assert.FileExists(t, logFile)
+
+	// Reset output before reading file (closes lumberjack on Windows)
+	log.SetOutput(os.Stdout)
 
 	// Read and verify content
 	content, err := os.ReadFile(logFile)
