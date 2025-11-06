@@ -241,24 +241,34 @@ on:
 	assert.NotNil(t, actions)
 	assert.Len(t, actions.Actions, 2)
 
-	// First action - event type becomes the ID for on: actions
-	action1 := actions.Actions[0]
-	assert.Equal(t, "alert.created", action1.ID)
-	assert.Equal(t, "", action1.Name) // No name for automatic actions
-	assert.Equal(t, "script", action1.Type)
-	assert.Equal(t, "local", action1.SourceType)
-	assert.Equal(t, scriptPath, action1.Script)
-	assert.Equal(t, "alert.created", action1.Trigger.EventType)
-	assert.Equal(t, 60, action1.Timeout)
+	// Find actions by ID (order is non-deterministic from map iteration)
+	var alertAction, incidentAction *config.Action
+	for i := range actions.Actions {
+		if actions.Actions[i].ID == "alert.created" {
+			alertAction = &actions.Actions[i]
+		} else if actions.Actions[i].ID == "incident.created" {
+			incidentAction = &actions.Actions[i]
+		}
+	}
 
-	// Second action - event type becomes the ID for on: actions
-	action2 := actions.Actions[1]
-	assert.Equal(t, "incident.created", action2.ID)
-	assert.Equal(t, "", action2.Name) // No name for automatic actions
-	assert.Equal(t, "http", action2.Type)
-	assert.NotNil(t, action2.HTTP)
-	assert.Equal(t, "https://api.example.com/notify", action2.HTTP.URL)
-	assert.Equal(t, "POST", action2.HTTP.Method)
+	// Verify alert.created action
+	require.NotNil(t, alertAction, "Should have alert.created action")
+	assert.Equal(t, "alert.created", alertAction.ID)
+	assert.Equal(t, "", alertAction.Name) // No name for automatic actions
+	assert.Equal(t, "script", alertAction.Type)
+	assert.Equal(t, "local", alertAction.SourceType)
+	assert.Equal(t, scriptPath, alertAction.Script)
+	assert.Equal(t, "alert.created", alertAction.Trigger.EventType)
+	assert.Equal(t, 60, alertAction.Timeout)
+
+	// Verify incident.created action
+	require.NotNil(t, incidentAction, "Should have incident.created action")
+	assert.Equal(t, "incident.created", incidentAction.ID)
+	assert.Equal(t, "", incidentAction.Name) // No name for automatic actions
+	assert.Equal(t, "http", incidentAction.Type)
+	assert.NotNil(t, incidentAction.HTTP)
+	assert.Equal(t, "https://api.example.com/notify", incidentAction.HTTP.URL)
+	assert.Equal(t, "POST", incidentAction.HTTP.Method)
 }
 
 func TestLoadActions_Defaults(t *testing.T) {

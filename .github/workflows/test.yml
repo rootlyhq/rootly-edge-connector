@@ -11,6 +11,7 @@ jobs:
     name: Test
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false  # Don't cancel other jobs if one fails
       matrix:
         os: [ubuntu-22.04, ubuntu-24.04, macos-latest, windows-latest]
         go: ['1.24']
