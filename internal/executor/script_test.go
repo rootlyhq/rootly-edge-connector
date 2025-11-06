@@ -631,10 +631,10 @@ func TestScriptRunner_OutputFileWriteError(t *testing.T) {
 }
 
 func TestScriptRunner_PowerShellScript(t *testing.T) {
-	// Test PowerShell script detection
+	// Test PowerShell script detection (.ps1 extension)
 	tmpDir := t.TempDir()
 	scriptPath := filepath.Join(tmpDir, "test.ps1")
-	err := os.WriteFile(scriptPath, []byte("Write-Host 'Test'\nExit 0"), 0755)
+	err := os.WriteFile(scriptPath, []byte("Write-Host 'PowerShell Test'\nExit 0"), 0755)
 	require.NoError(t, err)
 
 	runner := executor.NewScriptRunner([]string{tmpDir}, nil)
@@ -649,9 +649,20 @@ func TestScriptRunner_PowerShellScript(t *testing.T) {
 
 	result := runner.Run(context.Background(), action, map[string]string{})
 
-	// On Windows: might execute, On Unix: will fail (expected)
-	if runtime.GOOS != "windows" {
-		assert.NotNil(t, result.Error)
+	// PowerShell Core (pwsh/powershell) can be installed on any OS
+	// Test passes if:
+	// - Windows: Usually has PowerShell, should succeed
+	// - macOS/Linux with PowerShell Core installed: succeeds (exit code 0)
+	// - macOS/Linux without PowerShell: fails with "executable file not found"
+
+	if result.Error == nil {
+		// PowerShell is available - script executed
+		assert.Equal(t, 0, result.ExitCode)
+		assert.Contains(t, result.Stdout, "PowerShell Test")
+	} else {
+		// PowerShell not available - expected on systems without it
+		assert.Contains(t, result.Error.Error(), "executable file not found")
+		assert.Equal(t, 1, result.ExitCode)
 	}
 }
 

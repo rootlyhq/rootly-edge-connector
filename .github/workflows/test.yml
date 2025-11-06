@@ -35,6 +35,22 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Install PowerShell (for script tests)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            # Install PowerShell on Ubuntu
+            sudo apt-get update
+            sudo apt-get install -y wget
+            wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+            sudo dpkg -i packages-microsoft-prod.deb
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            # Install PowerShell on macOS
+            brew install --cask powershell
+          fi
+
       - name: Run unit tests
         run: make test-coverage
 
