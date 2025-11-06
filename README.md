@@ -234,7 +234,9 @@ Automatically clone and update scripts from Git:
 
 ### Callable Actions
 
-Actions with `action_triggered` event types are automatically registered with the backend, making them available in the Rootly UI for manual triggering:
+Actions with `action_triggered` event types are automatically registered with the backend, making them available in the Rootly UI for manual triggering.
+
+**Simple example (single event type):**
 
 ```yaml
 - id: restart_service
@@ -243,34 +245,60 @@ Actions with `action_triggered` event types are automatically registered with th
   type: script
   script: /opt/scripts/restart-service.sh
   trigger:
-    event_types:  # Supports all entity types
-      - "alert.action_triggered"
-      - "incident.action_triggered"
-      - "action.triggered"
-    # action_name is optional - defaults to id field if not specified
+    event_type: "alert.action_triggered"  # Single event type
+    # action_name is optional - automatically uses "restart_service" from id
 
-  # Parameter definitions: What users provide in the UI
   parameter_definitions:
     - name: service_name
       type: string
       required: true
       description: "Name of the service to restart"
-    - name: environment
-      type: string
-      required: false
-      default: "development"
-      options: ["development", "staging", "production"]
-      description: "Target environment"
 
-  # Parameter mappings: How user input + context maps to script
   parameters:
     service_name: "{{ parameters.service_name }}"  # User input
-    environment: "{{ parameters.environment }}"    # User input (or default)
-    entity_id: "{{ entity_id | default: 'none' }}" # Alert/Incident UUID (if applicable)
     triggered_by: "{{ triggered_by.email }}"       # Who triggered it
 
   timeout: 300
 ```
+
+**Advanced example (multiple event types):**
+
+```yaml
+- id: deploy_hotfix
+  name: "Deploy Hotfix"
+  description: "Deploy a hotfix to production"
+  type: script
+  script: /opt/scripts/deploy.sh
+  trigger:
+    event_types:  # Triggers from alerts, incidents, OR standalone
+      - "alert.action_triggered"
+      - "incident.action_triggered"
+      - "action.triggered"
+    # action_name: "deploy_hotfix"  # Optional - defaults to id if omitted
+
+  parameter_definitions:
+    - name: service_name
+      type: string
+      required: true
+    - name: environment
+      type: string
+      options: ["staging", "production"]
+      required: true
+
+  parameters:
+    service_name: "{{ parameters.service_name }}"  # User input
+    environment: "{{ parameters.environment }}"    # User input
+    entity_id: "{{ entity_id | default: 'none' }}" # Alert/Incident UUID (or "none" for standalone)
+    triggered_by: "{{ triggered_by.email }}"       # Who triggered it
+
+  timeout: 300
+```
+
+**Key Points:**
+- ✅ `trigger.action_name` is **optional** - it defaults to the `id` field
+- ✅ You only need to specify `action_name` if you want it to differ from `id`
+- ✅ Use single `event_type` OR multiple `event_types` (not both)
+- ✅ Multiple event types allow triggering from alerts, incidents, or standalone
 
 **Two-part parameter system:**
 1. **`parameter_definitions`** - Metadata for the UI (what fields to show users)
@@ -637,7 +665,7 @@ trigger:
   script: /opt/rootly-edge-connector/scripts/deploy.sh
   trigger:
     event_type: "incident.action_triggered"  # Triggered from incident
-    action_name: "deploy_hotfix"  # Must match id
+    # action_name: "deploy_hotfix"  # Optional - defaults to id if omitted
   parameter_definitions:
     - name: service
       type: string
