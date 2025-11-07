@@ -395,7 +395,7 @@ func TestScriptRunner_GoScript(t *testing.T) {
 	runner := executor.NewScriptRunner([]string{allowedDir}, nil)
 	result := runner.Run(context.Background(), &config.Action{
 		Script:  scriptPath,
-		Timeout: 10, // Go compilation takes longer
+		Timeout: 30, // Go compilation + execution is slower on Windows CI
 	}, map[string]string{"message": "Hello from Go"})
 
 	assert.Equal(t, 0, result.ExitCode)
