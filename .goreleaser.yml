@@ -142,13 +142,29 @@ nfpms:
       deb:
         file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}.deb"
 
+brews:
+  - repository:
+      owner: rootlyhq
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/rootlyhq/rootly-edge-connector"
+    description: "Rootly Edge Connector - Execute custom actions in response to Rootly events"
+    license: "Apache-2.0"
+    install: |
+      bin.install "rootly-edge-connector"
+    test: |
+      system "#{bin}/rootly-edge-connector", "--version"
+
 changelog:
   sort: asc
+  use: github
   filters:
     exclude:
       - '^docs:'
       - '^test:'
       - '^chore:'
+      - '^ci:'
       - Merge pull request
       - Merge branch
   groups:
@@ -167,4 +183,5 @@ release:
     name: rootly-edge-connector
   draft: false
   prerelease: auto
-  name_template: "{{.ProjectName}} v{{.Version}}"
+  mode: replace
+  name_template: "v{{ .Version }}"
