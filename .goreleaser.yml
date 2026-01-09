@@ -1,3 +1,8 @@
+# GoReleaser configuration
+# https://goreleaser.com/customization/
+
+version: 2
+
 project_name: rootly-edge-connector
 
 before:
@@ -37,9 +42,9 @@ builds:
 
 archives:
   - id: default
-    format: tar.gz
-    name_template: >-
-      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
@@ -50,10 +55,10 @@ archives:
       - actions.example.yml
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 nfpms:
   - id: packages
