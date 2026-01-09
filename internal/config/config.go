@@ -209,7 +209,7 @@ type Authorization struct {
 
 // ConvertToActions converts the new on/callable format to internal Action array
 func (cfg *ActionsConfig) ConvertToActions() {
-	actions := make([]Action, 0)
+	actions := make([]Action, 0, len(cfg.On)+len(cfg.Callable))
 
 	// Convert "on" actions (automatic triggers)
 	for eventType, onAction := range cfg.On {
