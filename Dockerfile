@@ -57,6 +57,10 @@ RUN chmod +x /opt/rootly-edge-connector/rootly-edge-connector
 COPY config.example.yml /etc/rootly-edge-connector/config.yml
 COPY actions.example.yml /etc/rootly-edge-connector/actions.yml
 
+# Copy test scripts from builder to execution directory
+COPY --from=builder /build/scripts /opt/rootly-edge-connector/scripts/
+RUN find /opt/rootly-edge-connector/scripts -name "*.sh" -exec chmod +x {} \;
+
 # Switch to non-root user
 USER rootly
 

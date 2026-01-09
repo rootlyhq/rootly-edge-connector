@@ -128,11 +128,38 @@ dev-setup: ## Setup development environment
 	@go mod download
 	@echo "Development setup complete!"
 
-docker-build: ## Build Docker image
-	@echo "Building Docker image..."
-	@docker build -t rootly/edge-connector:$(VERSION) .
-	@docker tag rootly/edge-connector:$(VERSION) rootly/edge-connector:latest
-	@echo "Docker image built!"
+docker-build-dev: ## Build development Docker image
+	@echo "Building development Docker image..."
+	@docker build -f Dockerfile.dev -t rootly-edge-connector:dev .
+	@echo "Development Docker image built: rootly-edge-connector:dev"
+
+docker-build-prod: ## Build production Docker image
+	@echo "Building production Docker image..."
+	@docker build -f Dockerfile -t rootly-edge-connector:$(VERSION) .
+	@docker tag rootly-edge-connector:$(VERSION) rootly-edge-connector:latest
+	@echo "Production Docker image built: rootly-edge-connector:$(VERSION)"
+
+docker-build: docker-build-prod ## Build production Docker image (alias for docker-build-prod)
+
+docker-run-dev: ## Run development Docker container
+	@echo "Running development container..."
+	@docker run --rm \
+		-e REC_API_KEY=$${REC_API_KEY} \
+		-v $(PWD)/config.example.dev.yml:/etc/rootly-edge-connector/config.yml:ro \
+		-v $(PWD)/actions.example.dev.yml:/etc/rootly-edge-connector/actions.yml:ro \
+		-v $(PWD)/scripts:/opt/rootly-edge-connector/scripts:ro \
+		-p 9090:9090 \
+		rootly-edge-connector:dev
+
+docker-run-prod: ## Run production Docker container
+	@echo "Running production container..."
+	@docker run --rm \
+		-e REC_API_KEY=$${REC_API_KEY} \
+		-v $(PWD)/config.example.yml:/etc/rootly-edge-connector/config.yml:ro \
+		-v $(PWD)/actions.example.yml:/etc/rootly-edge-connector/actions.yml:ro \
+		-v $(PWD)/scripts:/opt/rootly-edge-connector/scripts:ro \
+		-p 9090:9090 \
+		rootly-edge-connector:latest
 
 # Release targets
 release: clean build-all ## Create a release (clean + build for all platforms)

@@ -243,26 +243,14 @@ tail -f /var/log/rootly-edge-connector/connector.log
 ### Build Docker Image
 
 ```bash
-docker build -t rootly-edge-connector:dev .
+# Development image
+docker build -f Dockerfile.dev -t rootly-edge-connector:dev .
+
+# Production image
+docker build -f Dockerfile -t rootly-edge-connector:prod .
 ```
 
-### Run with Docker Compose
-
-```bash
-# Start services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-
-# Rebuild and restart
-docker-compose up -d --build
-```
-
-### Test Docker Image
+### Run Docker Container
 
 ```bash
 # Run with local config

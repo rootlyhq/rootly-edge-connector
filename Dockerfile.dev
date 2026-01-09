@@ -1,8 +1,9 @@
 # Dockerfile.dev
 # Development Dockerfile for Rootly Edge Connector
-# Optimized for fast iteration and debugging
+# Multi-stage build optimized for development with live reloading
 
-FROM golang:1.24-alpine
+# Base stage - dependencies and setup
+FROM golang:1.24-alpine AS base
 
 # Install development tools and runtime dependencies
 RUN apk update && \
@@ -14,7 +15,7 @@ RUN apk update && \
     curl \
     && update-ca-certificates
 
-# Create non-root user (optional in dev, but good practice)
+# Create non-root user
 RUN addgroup -S rootly && \
     adduser -S rootly -G rootly
 
@@ -32,20 +33,26 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
+# Development stage - with source code and tooling
+FROM base AS development
+
 # Copy source code
 # Note: In dev mode, you typically mount the source as a volume
 # But we copy it here as a fallback
 COPY . .
 
+# Set ownership of app directory for non-root user
+RUN chown -R rootly:rootly /app
+
 # Copy dev configuration files
 COPY config.example.dev.yml /etc/rootly-edge-connector/config.yml
 COPY actions.example.dev.yml /etc/rootly-edge-connector/actions.yml
 
-# Copy test scripts to execution directory (they're already in /app/scripts from COPY . .)
-# Just make them executable
+# Copy test scripts to execution directory
 RUN if [ -d /app/scripts ]; then \
         cp /app/scripts/*.sh /opt/rootly-edge-connector/scripts/ && \
-        chmod +x /opt/rootly-edge-connector/scripts/*.sh; \
+        chmod +x /opt/rootly-edge-connector/scripts/*.sh && \
+        chown -R rootly:rootly /opt/rootly-edge-connector/scripts/; \
     fi
 
 # Development environment variables
@@ -61,9 +68,12 @@ ENV TERM=xterm-256color
 # Expose metrics port
 EXPOSE 9090
 
-# Health check (same as production but with colored logs consideration)
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pgrep -f "go run" || pgrep -f rootly-edge-connector || exit 1
+
+# Switch to non-root user
+USER rootly
 
 # Default: Run with go run for live reloading (rebuild required)
 # Override with docker-compose or docker run command for different modes

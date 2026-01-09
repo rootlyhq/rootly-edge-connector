@@ -1,163 +1,142 @@
-# Rootly Edge Connector Actions Configuration
-# Copy this file to actions.yml and customize for your needs
+# Rootly Edge Connector Actions - Development/Testing
+# Simplified format for local development and Docker testing
 
-# Global defaults (optional)
 defaults:
   timeout: 30
   source_type: local
-  env:
-    ENVIRONMENT: production
-    LOG_LEVEL: info
 
-# Automatic actions - triggered by Rootly events
-# Event type is the key (1:1 mapping)
-# These run automatically, no user interaction
+# Automatic actions for testing
 on:
-  # Runs when new alerts are created
   alert.created:
-    script: /opt/rootly-edge-connector/scripts/handle-alert.sh
+    script: /opt/rootly-edge-connector/scripts/test-echo.sh
     parameters:
       alert_id: "{{ id }}"
       summary: "{{ summary }}"
       severity: "{{ labels.severity }}"
       host: "{{ data.host }}"
       service: "{{ services[0].name }}"
-    timeout: 60
 
-  # Runs when alerts are updated
-  alert.updated:
-    http:
-      url: "https://your-webhook-url.com/alert-updated"
-      method: POST
-      headers:
-        Content-Type: application/json
-      body: |
-        {
-          "alert_id": "{{ id }}",
-          "status": "{{ status }}",
-          "summary": "{{ summary }}"
-        }
-
-  # Runs when new incidents are created
   incident.created:
     http:
-      url: "{{ env.SLACK_WEBHOOK_URL }}"
+      url: "https://httpbin.org/post"
       method: POST
       headers:
         Content-Type: application/json
       body: |
         {
-          "text": "🔥 Incident: {{ title }}",
-          "severity": "{{ severity.name }}",
-          "services": "{{ services | map: 'name' | join: ', ' }}"
+          "incident_id": "{{ id }}",
+          "title": "{{ title }}",
+          "severity": "{{ severity.name }}"
         }
 
-# Callable actions - triggered by users from Rootly UI
-# Action slug is the key
-# These appear as buttons in the UI
+# Callable actions for testing
 callable:
-  # Standalone action (not tied to alert/incident)
-  clear_cache:
-    name: Clear Application Cache
-    description: Clear Redis or Memcached cache
-    script: /opt/rootly-edge-connector/scripts/clear-cache.sh
+  # Standalone action
+  test_standalone_action:
+    name: Test Standalone Action
+    description: Test standalone callable action
+    script: /opt/rootly-edge-connector/scripts/test-echo.sh
     # trigger defaults to: action.triggered
     parameter_definitions:
-      - name: cache_type
-        type: list
-        options: [redis, memcached, all]
-        default: redis
-        description: Which cache to clear
-      - name: scope
-        type: list
-        options: [global, regional]
-        default: global
-    # Auto-generated: cache_type, scope → {{ parameters.X }}
-    # Optionally add extras:
+      - name: message
+        type: string
+        required: false
+        default: Hello
+    # Auto-generated: message: "{{ parameters.message }}"
+    # Only specify extras:
     parameters:
-      triggered_by: "{{ triggered_by.email }}"
-    timeout: 45
+      triggered_by_name: "{{ triggered_by.name }}"
+      triggered_by_email: "{{ triggered_by.email }}"
 
-  # Action for alerts only
-  restart_service:
-    name: Restart Service
-    description: Restart a production service with graceful shutdown
-    trigger: alert.action_triggered  # Shows on alerts only
-    script: /opt/rootly-edge-connector/scripts/restart-service.sh
+  # Alert-specific action
+  test_alert_action:
+    name: Test Alert Action
+    description: Test action triggered from alert
+    trigger: alert.action_triggered
+    script: /opt/rootly-edge-connector/scripts/test-echo.sh
     parameter_definitions:
       - name: service_name
         type: string
         required: true
-        description: Name of the service to restart
-      - name: host
-        type: string
-        required: true
-        description: Target host
-      - name: force
-        type: boolean
-        default: false
-        description: Force restart without graceful shutdown
-    # Auto-generated: service_name, host, force → {{ parameters.X }}
-    # Only specify extras or custom mappings:
+        description: Service to restart
+    # Auto-generated: service_name: "{{ parameters.service_name }}"
+    # Extras:
     parameters:
-      alert_id: "{{ entity_id }}"
+      entity_id: "{{ entity_id }}"
       triggered_by: "{{ triggered_by.email }}"
-    timeout: 120
 
-  # Action for alerts (can also create similar one for incidents)
-  escalate:
-    name: Escalate Issue
-    description: Escalate to on-call engineer via PagerDuty
-    trigger: alert.action_triggered
+  # Incident-specific action
+  test_incident_action:
+    name: Test Incident Action
+    description: Test action triggered from incident
+    trigger: incident.action_triggered
     http:
-      url: "https://api.pagerduty.com/incidents"
+      url: "https://httpbin.org/post"
       method: POST
       headers:
-        Authorization: "Token token={{ env.PAGERDUTY_TOKEN }}"
         Content-Type: application/json
       body: |
         {
-          "incident": {
-            "type": "incident",
-            "title": "{{ title | default: summary }}",
-            "urgency": "high"
-          }
+          "message": "{{ parameters.message }}",
+          "incident_id": "{{ entity_id }}",
+          "triggered_by": "{{ triggered_by.email }}"
         }
     parameter_definitions:
       - name: message
         type: string
         required: true
-        description: Escalation message
-    timeout: 30
+        description: Message to send
 
-  # Incident-only action with git source
-  run_playbook:
-    name: Run Incident Playbook
-    description: Execute Ansible playbook from Git repository
-    trigger: incident.action_triggered
-    source_type: git
-    script: playbooks/incident-response.yml
-    git_options:
-      url: "https://github.com/your-org/runbooks.git"
-      branch: main
-      poll_interval_sec: 300
+  # Multi-entity action with list parameters
+  restart_test_service:
+    name: Restart Test Service
+    description: Restart service (works on alerts, incidents, and standalone)
+    trigger: alert.action_triggered
+    script: /opt/rootly-edge-connector/scripts/test-echo.sh
     parameter_definitions:
-      - name: playbook
-        type: list
-        options: [database, network, application]
+      - name: service_name
+        type: string
         required: true
-        description: Which playbook to run
-    # Auto-generated: playbook → {{ parameters.playbook }}
-    # Extras:
+        description: Service name to restart
+      - name: environment
+        type: list
+        required: false
+        default: development
+        options: [development, staging, production]
+        description: Target environment
+    # Auto-generated: service_name, environment
+    # Only specify extras:
     parameters:
-      incident_id: "{{ entity_id }}"
-      severity: "{{ severity.slug }}"
-    timeout: 600
+      entity_id: "{{ entity_id | default: 'none' }}"
+      triggered_by: "{{ triggered_by.email }}"
+      log_level: debug
+      region: us-west-2
+    timeout: 60
 
-# Notes:
-# - Use absolute paths for local scripts
-# - Scripts receive parameters as REC_PARAM_* environment variables
-# - HTTP actions return status code as exit code (200-299 = success)
-# - Use {{ env.VAR }} to access environment variables
-# - All callable actions must have parameter_definitions to show in UI
-# - Automatic actions (on:) don't need parameter_definitions
+  # Git-based action (ready to test!)
+  test_git_echo:
+    name: Test Git-Based Echo
+    description: Execute script from Git repository
+    source_type: git
+    script: scripts/test-echo.sh
+    git_options:
+      url: "https://github.com/rootlyhq/rootly-edge-connector.git"
+      branch: master
+      poll_interval_sec: 60
+    parameter_definitions:
+      - name: test_param
+        type: string
+        default: test_value
+    # Auto-generated: test_param: "{{ parameters.test_param }}"
+    # Extras (additional context not from UI):
+    parameters:
+      alert_id: "{{ id }}"
+      summary: "{{ summary }}"
+
+# Testing notes:
+# - Script paths use Docker paths (/opt/rootly-edge-connector/scripts/*)
+# - For local testing outside Docker, update paths to absolute local paths
+# - Git-based action (test_git_echo) works everywhere without path changes
+# - HTTP actions use httpbin.org (no auth required, safe for testing)
+# - All callable actions have parameter_definitions (required for UI)
+# - Automatic actions (on:) have no parameter_definitions

@@ -73,19 +73,21 @@ docker run --rm -it \
 Multi-stage build optimized for production:
 - **Build stage**: Compiles Go binary with version information
 - **Runtime stage**: Minimal Alpine image with only runtime dependencies
-- **Size**: ~50MB final image
+- **Size**: ~164MB final image (includes Python3 + pip for script support)
 - **User**: Runs as non-root `rootly` user
 - **Configs**: Uses `config.example.yml` and `actions.example.yml`
+- **Scripts**: Includes test scripts from /scripts directory
 
 ### `Dockerfile.dev` (Development)
 
-Single-stage build optimized for development:
-- **Based on**: `golang:1.24-alpine` with full toolchain
-- **Includes**: make, git, debugging tools
-- **Runtime**: Uses `go run` for easier debugging
+Multi-stage build optimized for development with live reloading:
+- **Base stage**: Dependencies and Go module caching
+- **Development stage**: Full `golang:1.24-alpine` with toolchain
+- **Includes**: make, git, curl, debugging tools
+- **Runtime**: Uses `go run` for live reloading and easier debugging
 - **Configs**: Uses `config.example.dev.yml` and `actions.example.dev.yml`
-- **Logging**: Colored, debug-level output by default
-- **Size**: ~500MB (includes Go toolchain)
+- **Logging**: Colored, trace-level output by default
+- **Size**: ~759MB (includes Go toolchain, dependencies, and source code for development)
 
 
 ## Development Workflows

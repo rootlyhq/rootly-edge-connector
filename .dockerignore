@@ -1,18 +1,16 @@
 # Git
 .git
 .gitignore
+.gitattributes
 
 # Build artifacts
 bin/
-*.exe
-*.dll
-*.so
-*.dylib
-
-# Test files
-*_test.go
-tests/
-coverage.out
+dist/
+*.out
+*.test
+coverage.txt
+coverage.html
+*.prof
 
 # IDE
 .vscode/
@@ -20,14 +18,51 @@ coverage.out
 *.swp
 *.swo
 *~
-
-# Misc
 .DS_Store
-README.md
-LICENSE
 
-# Local configs (don't include in image)
+# Docker files (we don't need these in the build context)
+Dockerfile
+Dockerfile.dev
+.dockerignore
+docker-compose.yml
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation (not needed in container)
+*.md
+docs/
+LICENSE
+CHANGELOG.md
+
+# Test data (might be large)
+testdata/
+tests/
+
+# Local config files (user's runtime configs)
+# Note: config.example*.yml and actions.example*.yml are NOT excluded
+# as they are needed by Dockerfile
 config.yml
 actions.yml
-scripts/
+config.local.yml
+actions.local.yml
+*.local.*
+
+# Dependencies (handled by go mod)
+vendor/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Logs
+*.log
 logs/
+
+# OS specific
+Thumbs.db
+.Trashes
