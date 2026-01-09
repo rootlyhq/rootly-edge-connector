@@ -67,7 +67,7 @@ nfpms:
       Rootly Edge Connector enables execution of custom actions and automations
       in response to Rootly alerts and incidents. It polls the Rootly API for
       events, executes configured scripts or HTTP requests, and reports results back.
-    license: MIT
+    license: Apache-2.0
 
     formats:
       - rpm
