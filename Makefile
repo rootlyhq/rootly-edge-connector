@@ -137,8 +137,8 @@ docker-build-prod: ## Build production Docker image
 	@echo "Building production Docker image..."
 	@docker build -f Dockerfile -t rootly-edge-connector:$(VERSION) .
 	@docker tag rootly-edge-connector:$(VERSION) rootly-edge-connector:latest
-	@docker tag rootly-edge-connector:$(VERSION) rootlyhq/rootly-edge-connector:$(VERSION)
-	@docker tag rootly-edge-connector:$(VERSION) rootlyhq/rootly-edge-connector:latest
+	@docker tag rootly-edge-connector:$(VERSION) rootlyhub/rootly-edge-connector:$(VERSION)
+	@docker tag rootly-edge-connector:$(VERSION) rootlyhub/rootly-edge-connector:latest
 	@echo "Production Docker image built: rootly-edge-connector:$(VERSION)"
 
 docker-build: docker-build-prod ## Build production Docker image (alias for docker-build-prod)
@@ -165,11 +165,11 @@ docker-run-prod: ## Run production Docker container
 
 docker-push: ## Push Docker images to Docker Hub
 	@echo "Pushing Docker images to Docker Hub..."
-	@docker tag rootly-edge-connector:$(VERSION) rootlyhq/rootly-edge-connector:$(VERSION)
-	@docker tag rootly-edge-connector:$(VERSION) rootlyhq/rootly-edge-connector:latest
-	@docker push rootlyhq/rootly-edge-connector:$(VERSION)
-	@docker push rootlyhq/rootly-edge-connector:latest
-	@echo "Docker images pushed: rootlyhq/rootly-edge-connector:$(VERSION) and rootlyhq/rootly-edge-connector:latest"
+	@docker tag rootly-edge-connector:$(VERSION) rootlyhub/rootly-edge-connector:$(VERSION)
+	@docker tag rootly-edge-connector:$(VERSION) rootlyhub/rootly-edge-connector:latest
+	@docker push rootlyhub/rootly-edge-connector:$(VERSION)
+	@docker push rootlyhub/rootly-edge-connector:latest
+	@echo "Docker images pushed: rootlyhub/rootly-edge-connector:$(VERSION) and rootlyhub/rootly-edge-connector:latest"
 
 # Release targets
 release: clean build-all ## Create a release (clean + build for all platforms)
