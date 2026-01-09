@@ -234,10 +234,155 @@ The following environment variables override config file settings:
 
 ### Release Process
 
-1. Tag version: `git tag v1.0.0`
-2. Push tag: `git push origin v1.0.0`
-3. GoReleaser builds binaries for all platforms
-4. Creates GitHub release with artifacts
+The release process uses semantic versioning with git tags. Pushing a version tag automatically triggers GitHub Actions to build and publish binaries for all platforms via GoReleaser.
+
+#### Prerequisites
+
+**CRITICAL**: Ensure your working directory is clean before releasing:
+```bash
+git status  # Must show "nothing to commit, working tree clean"
+```
+
+The release script will **fail** if there are uncommitted changes.
+
+#### Quick Release Commands
+
+```bash
+# Patch release (1.2.3 → 1.2.4) - for bug fixes
+make release-patch
+
+# Minor release (1.2.3 → 1.3.0) - for new features
+make release-minor
+
+# Major release (1.2.3 → 2.0.0) - for breaking changes
+make release-major
+```
+
+Each command will:
+1. Check that your working directory is clean
+2. Show current and next version
+3. Ask for confirmation
+4. Create and push a git tag (e.g., `v1.2.4`)
+5. Trigger GitHub Actions to build and publish the release
+
+#### Checking Version Information
+
+```bash
+# Show current version and all next versions
+make version-show
+
+# Example output:
+# Current version: 1.2.3
+# Next patch: 1.2.4
+# Next minor: 1.3.0
+# Next major: 2.0.0
+
+# Show just the next patch version
+make version-next
+```
+
+#### Manual Release Process
+
+If you need more control, you can use the `bump-version.sh` script directly:
+
+```bash
+# Show what the next version would be (no changes)
+./scripts/bump-version.sh show patch
+./scripts/bump-version.sh show minor
+./scripts/bump-version.sh show major
+
+# Bump and tag (with confirmation prompt)
+./scripts/bump-version.sh patch
+./scripts/bump-version.sh minor
+./scripts/bump-version.sh major
+
+# Show help
+./scripts/bump-version.sh help
+```
+
+#### What Happens After Tagging
+
+1. **Git tag pushed**: e.g., `v1.2.4`
+2. **GitHub Actions triggered**: `.github/workflows/release.yml` runs
+3. **GoReleaser builds**:
+   - Linux (amd64, arm64, arm)
+   - macOS (amd64, arm64)
+   - Windows (amd64)
+4. **GitHub Release created** with:
+   - Binaries for all platforms
+   - Checksums
+   - Release notes (auto-generated from commits)
+5. **Artifacts published** at `https://github.com/rootlyhq/rootly-edge-connector/releases`
+
+#### Semantic Versioning Guidelines
+
+Use **patch** (1.2.3 → 1.2.4) for:
+- Bug fixes
+- Security patches
+- Performance improvements
+- Documentation updates
+
+Use **minor** (1.2.3 → 1.3.0) for:
+- New features (backwards compatible)
+- New configuration options
+- New environment variables
+- Deprecations (with backward compatibility)
+
+Use **major** (1.2.3 → 2.0.0) for:
+- Breaking changes
+- API changes
+- Configuration format changes
+- Removing deprecated features
+
+#### Troubleshooting
+
+**Error: "Working directory is not clean"**
+```bash
+# Check what's uncommitted
+git status
+
+# Either commit changes:
+git add .
+git commit -m "fix: description"
+
+# Or stash them:
+git stash
+```
+
+**Error: "Tag already exists"**
+```bash
+# Delete local tag
+git tag -d v1.2.4
+
+# Delete remote tag (careful!)
+git push origin :refs/tags/v1.2.4
+
+# Try release again
+make release-patch
+```
+
+**Release failed in CI**
+- Check GitHub Actions: https://github.com/rootlyhq/rootly-edge-connector/actions
+- View workflow logs for errors
+- Common issues: Go build errors, missing dependencies
+- Fix issues, then create a new patch release
+
+#### Manual Tag and Push (Not Recommended)
+
+If you need to manually create a tag without the script:
+
+```bash
+# Create annotated tag
+git tag -a v1.2.4 -m "Release v1.2.4"
+
+# Push tag to trigger CI
+git push origin v1.2.4
+
+# View release progress
+# https://github.com/rootlyhq/rootly-edge-connector/actions
+```
+
+**Note**: Using `make release-*` commands is preferred as they include safety checks.
 
 ## Test Fixtures and Testdata Best Practices
 
