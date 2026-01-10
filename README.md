@@ -22,6 +22,14 @@ A high-performance, production-ready edge connector for Rootly that polls events
 - **Prometheus metrics**: Built-in metrics server for monitoring (12 metrics)
 - **Single binary**: No runtime dependencies, cross-platform support
 
+## How It Works
+
+The Rootly Edge Connector uses an outbound-only polling model to securely integrate with internal systems:
+
+![Edge Connector Architecture](docs/images/workflow-diagram.png)
+
+The connector polls Rootly's API over HTTPS, receives events, and executes local scripts or automations in response. No inbound firewall rules are required.
+
 ## Quick Start
 
 ### Prerequisites
