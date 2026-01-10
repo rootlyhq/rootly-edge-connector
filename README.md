@@ -59,6 +59,21 @@ make install
 go install github.com/rootlyhq/rootly-edge-connector/cmd/rec@latest
 ```
 
+#### Using Homebrew (macOS/Linux)
+
+```bash
+# Add the Rootly tap
+brew tap rootlyhq/tap
+
+# Install rootly-edge-connector
+brew install rootly-edge-connector
+
+# Or install directly in one command
+brew install rootlyhq/tap/rootly-edge-connector
+```
+
+The binary will be available as `rootly-edge-connector` in your PATH.
+
 #### Systemd Installation (Linux)
 
 For production Linux deployments with systemd:
