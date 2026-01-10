@@ -746,7 +746,7 @@ The following environment variables can override configuration file settings:
 | Variable | Description | Values | Config Override |
 |----------|-------------|--------|-----------------|
 | `REC_API_URL` | Rootly API base URL | `https://rec.rootly.com` | `rootly.api_url` |
-| `REC_API_PATH` | API path prefix | `/v1`, `/rec/v1` | `rootly.api_path` |
+| `REC_API_PATH` | API path prefix | `/v1` | `rootly.api_path` |
 | `REC_API_KEY` | Rootly API token (required) | `rec_xxxxx...` | `rootly.api_key` |
 | `REC_LOG_FORMAT_TYPE` | Log output format | `json`, `text`, `colored` | `logging.format` |
 | `REC_LOG_LEVEL` | Log verbosity level | `trace`, `debug`, `info`, `warn`, `error` | `logging.level` |
