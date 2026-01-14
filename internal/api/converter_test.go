@@ -58,56 +58,56 @@ func TestConvertActionsToRegistrations_Callable(t *testing.T) {
 
 	request := api.ConvertActionsToRegistrations(actions)
 
-	// Both have parameter_definitions → both are callable
-	assert.Len(t, request.Automatic, 0)
-	assert.Len(t, request.Callable, 2)
+	// Both actions sent to backend (backend categorizes based on trigger)
+	require.Len(t, request.Actions, 2)
 
-	// First callable action
-	assert.Equal(t, "restart_server", request.Callable[0].Slug)
-	assert.Equal(t, "Restart Server", request.Callable[0].Name)
-	assert.Equal(t, "script", request.Callable[0].ActionType)
-	assert.Equal(t, "Restart production server", request.Callable[0].Description)
-	assert.Equal(t, 300, request.Callable[0].Timeout)
-	assert.Equal(t, "alert.action_triggered", request.Callable[0].Trigger)
-	assert.Len(t, request.Callable[0].Parameters, 2)
-	assert.Equal(t, "server_id", request.Callable[0].Parameters[0].Name)
-	assert.True(t, request.Callable[0].Parameters[0].Required)
+	// First action (callable based on trigger pattern)
+	assert.Equal(t, "restart_server", request.Actions[0].Slug)
+	assert.Equal(t, "Restart Server", request.Actions[0].Name)
+	assert.Equal(t, "script", request.Actions[0].ActionType)
+	assert.Equal(t, "Restart production server", request.Actions[0].Description)
+	assert.Equal(t, 300, request.Actions[0].Timeout)
+	assert.Equal(t, "alert.action_triggered", request.Actions[0].Trigger)
+	assert.Len(t, request.Actions[0].Parameters, 2)
+	assert.Equal(t, "server_id", request.Actions[0].Parameters[0].Name)
+	assert.True(t, request.Actions[0].Parameters[0].Required)
 
-	// Second callable action
-	assert.Equal(t, "check_status", request.Callable[1].Slug)
-	assert.Equal(t, "Check Status", request.Callable[1].Name)
-	assert.Equal(t, "action.triggered", request.Callable[1].Trigger)
+	// Second action (callable based on trigger pattern)
+	assert.Equal(t, "check_status", request.Actions[1].Slug)
+	assert.Equal(t, "Check Status", request.Actions[1].Name)
+	assert.Equal(t, "action.triggered", request.Actions[1].Trigger)
 }
 
-func TestConvertActionsToRegistrations_AllActions(t *testing.T) {
+func TestConvertActionsToRegistrations_MixedActions(t *testing.T) {
 	actions := []config.Action{
 		{
 			ID:      "auto_action",
-			Name:    "auto_action",
+			Name:    "",
 			Type:    "script",
 			Timeout: 60,
 			Trigger: config.TriggerConfig{
-				EventType: "alert.created", // Automatic trigger - now registered!
+				EventType: "alert.created", // Automatic trigger
 			},
 		},
 		{
 			ID:      "callable_action",
-			Name:    "callable_action",
+			Name:    "Callable Action",
 			Type:    "script",
 			Timeout: 60,
 			Trigger: config.TriggerConfig{
-				EventType: "incident.action_triggered", // User-triggered action
+				EventType: "incident.action_triggered", // Callable trigger
 			},
 		},
 	}
 
 	request := api.ConvertActionsToRegistrations(actions)
 
-	// Both have no parameter_definitions → both are automatic
-	assert.Len(t, request.Automatic, 2)
-	assert.Len(t, request.Callable, 0)
-	assert.Equal(t, "auto_action", request.Automatic[0].Slug)
-	assert.Equal(t, "callable_action", request.Automatic[1].Slug)
+	// Both actions sent to backend (backend categorizes)
+	require.Len(t, request.Actions, 2)
+	assert.Equal(t, "auto_action", request.Actions[0].Slug)
+	assert.Equal(t, "alert.created", request.Actions[0].Trigger)
+	assert.Equal(t, "callable_action", request.Actions[1].Slug)
+	assert.Equal(t, "incident.action_triggered", request.Actions[1].Trigger)
 }
 
 func TestConvertActionsToRegistrations_Empty(t *testing.T) {
@@ -115,15 +115,14 @@ func TestConvertActionsToRegistrations_Empty(t *testing.T) {
 
 	request := api.ConvertActionsToRegistrations(actions)
 
-	assert.Empty(t, request.Automatic)
-	assert.Empty(t, request.Callable)
+	assert.Empty(t, request.Actions)
 }
 
 func TestConvertActionsToRegistrations_AutomaticActions(t *testing.T) {
 	actions := []config.Action{
 		{
 			ID:   "auto_action1",
-			Name: "auto_action1",
+			Name: "",
 			Type: "script",
 			Trigger: config.TriggerConfig{
 				EventType: "alert.created",
@@ -131,7 +130,7 @@ func TestConvertActionsToRegistrations_AutomaticActions(t *testing.T) {
 		},
 		{
 			ID:   "auto_action2",
-			Name: "auto_action2",
+			Name: "",
 			Type: "http",
 			Trigger: config.TriggerConfig{
 				EventType: "incident.created",
@@ -141,11 +140,12 @@ func TestConvertActionsToRegistrations_AutomaticActions(t *testing.T) {
 
 	request := api.ConvertActionsToRegistrations(actions)
 
-	// No parameter_definitions → all are automatic
-	assert.Len(t, request.Automatic, 2)
-	assert.Len(t, request.Callable, 0)
-	assert.Equal(t, "auto_action1", request.Automatic[0].Slug)
-	assert.Equal(t, "auto_action2", request.Automatic[1].Slug)
+	// Both actions sent to backend (automatic triggers)
+	require.Len(t, request.Actions, 2)
+	assert.Equal(t, "auto_action1", request.Actions[0].Slug)
+	assert.Equal(t, "alert.created", request.Actions[0].Trigger)
+	assert.Equal(t, "auto_action2", request.Actions[1].Slug)
+	assert.Equal(t, "incident.created", request.Actions[1].Trigger)
 }
 
 func TestConvertActionsToRegistrations_WithID(t *testing.T) {
@@ -173,11 +173,10 @@ func TestConvertActionsToRegistrations_WithID(t *testing.T) {
 
 	request := api.ConvertActionsToRegistrations(actions)
 
-	// Has parameter_definitions → callable
-	assert.Len(t, request.Automatic, 0)
-	require.Len(t, request.Callable, 1)
+	// Action sent to backend (callable trigger)
+	require.Len(t, request.Actions, 1)
 
-	reg := request.Callable[0]
+	reg := request.Actions[0]
 	assert.Equal(t, "send_webhook", reg.Slug, "Should use id as slug")
 	assert.Equal(t, "Send Webhook", reg.Name, "Should use explicit name")
 	assert.Contains(t, reg.Description, "Send a webhook")
@@ -221,11 +220,10 @@ func TestConvertActionsToRegistrations_HTTPAction(t *testing.T) {
 
 	request := api.ConvertActionsToRegistrations(actions)
 
-	// Has parameter_definitions → callable
-	assert.Len(t, request.Automatic, 0)
-	require.Len(t, request.Callable, 1)
+	// Action sent to backend (callable trigger)
+	require.Len(t, request.Actions, 1)
 
-	reg := request.Callable[0]
+	reg := request.Actions[0]
 	assert.Equal(t, "send_webhook", reg.Slug) // id → slug
 	assert.Equal(t, "", reg.Name)             // no name provided (backend humanizes)
 	assert.Equal(t, "http", reg.ActionType)
@@ -233,6 +231,6 @@ func TestConvertActionsToRegistrations_HTTPAction(t *testing.T) {
 	assert.Equal(t, 30, reg.Timeout)
 	assert.Len(t, reg.Parameters, 1)
 
-	// Note: HTTP configuration is NOT included in CallableActionRegistration
+	// Note: HTTP configuration is NOT included in ActionRegistration
 	// The connector doesn't send HTTP config to backend during registration
 }

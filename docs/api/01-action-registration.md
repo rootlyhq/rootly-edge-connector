@@ -6,18 +6,23 @@ Examples of what the Edge Connector sends to `POST /rec/v1/actions` when registe
 
 ## Registration Behavior
 
-**Automatic actions** (`on:` section):
-- Registered for visibility/audit
-- No `parameter_definitions` → Backend knows they're automatic
+**Backend categorizes actions based on the `trigger` field:**
+
+**Automatic actions** (`on:` section in config):
+- Trigger: `alert.created`, `incident.created`, etc.
+- Backend categorizes as automatic based on trigger pattern
 - **Show in UI as read-only** (visible but not clickable)
 - Users can see what automations are configured
 - No forms, no user interaction
 
-**Callable actions** (`callable:` section):
-- Registered with `parameter_definitions` → Backend generates UI forms
+**Callable actions** (`callable:` section in config):
+- Trigger: `action.triggered`, `alert.action_triggered`, or `incident.action_triggered`
+- Backend categorizes as callable based on trigger pattern
 - **Show in UI as interactive buttons**
 - Users can click and fill out parameter forms
 - Trigger execution with user-provided inputs
+
+**The Edge Connector sends all actions in a single `actions` array. The backend determines which are automatic and which are callable by examining the `trigger` field.**
 
 ## Quick Reference
 
@@ -88,28 +93,32 @@ on:
 
 **Sent to API (POST /rec/v1/actions):**
 
-**Simplified format:**
 ```json
 {
-  "automatic": [
+  "actions": [
     {
       "slug": "alert.created",
+      "name": "",
       "action_type": "script",
       "trigger": "alert.created",
       "timeout": 60,
-      "description": "Handles alert.created events"
+      "description": "Handles alert.created events",
+      "parameters": []
     },
     {
       "slug": "incident.created",
+      "name": "",
       "action_type": "http",
       "trigger": "incident.created",
       "timeout": 30,
-      "description": "Handles incident.created events"
+      "description": "Handles incident.created events",
+      "parameters": []
     }
-  ],
-  "callable": []
+  ]
 }
 ```
+
+**Backend categorizes these as automatic** because their `trigger` values (`alert.created`, `incident.created`) are not callable trigger patterns.
 
 **Fields for automatic actions:**
 - ✅ `slug` - Unique identifier (event type)
@@ -160,11 +169,9 @@ callable:
 
 **Sent to API (POST /rec/v1/actions):**
 
-**Simplified format:**
 ```json
 {
-  "automatic": [],
-  "callable": [
+  "actions": [
     {
       "slug": "restart_server",
       "name": "Restart Production Server",
@@ -192,6 +199,8 @@ callable:
   ]
 }
 ```
+
+**Backend categorizes this as callable** because the `trigger` value (`alert.action_triggered`) ends with `.action_triggered`.
 
 **Fields for callable actions:**
 - ✅ `slug` - Unique identifier
@@ -256,11 +265,9 @@ callable:
 
 **Sent to API (POST /rec/v1/actions):**
 
-**Simplified format:**
 ```json
 {
-  "automatic": [],
-  "callable": [
+  "actions": [
     {
       "slug": "send_webhook",
       "name": "Send Webhook",
@@ -288,6 +295,8 @@ callable:
   ]
 }
 ```
+
+**Backend categorizes this as callable** because the `trigger` value is `action.triggered`.
 
 **Fields NOT sent (execution details):**
 - ❌ `script` path - Stays on connector
@@ -378,21 +387,25 @@ callable:
         options: [redis, memcached]
 ```
 
-**Sent to API (proposed simplified format):**
+**Sent to API:**
 ```json
 {
-  "automatic": [
+  "actions": [
     {
       "slug": "alert.created",
-      "trigger": "alert.created"
-    }
-  ],
-  "callable": [
+      "name": "",
+      "action_type": "script",
+      "trigger": "alert.created",
+      "timeout": 30,
+      "parameters": []
+    },
     {
       "slug": "scale_service",
       "name": "Scale Service",
       "description": "Scale service capacity",
+      "action_type": "script",
       "trigger": "alert.action_triggered",
+      "timeout": 30,
       "parameters": [
         {
           "name": "target_capacity",
@@ -404,7 +417,9 @@ callable:
     {
       "slug": "clear_cache",
       "name": "Clear Cache",
+      "action_type": "http",
       "trigger": "action.triggered",
+      "timeout": 30,
       "parameters": [
         {
           "name": "cache_type",
@@ -417,11 +432,10 @@ callable:
 }
 ```
 
-**Benefits of split format:**
-- Clear separation in payload mirrors config structure
-- Backend can handle automatic vs callable differently
-- Smaller payloads (automatic actions have minimal fields)
-- Easier to understand at a glance
+**Backend categorizes based on trigger:**
+- `alert.created` → **Automatic** (trigger is not `.action_triggered` pattern)
+- `scale_service` → **Callable** (trigger is `alert.action_triggered`)
+- `clear_cache` → **Callable** (trigger is `action.triggered`)
 
 ---
 
@@ -429,15 +443,13 @@ callable:
 
 **Success (201 Created):**
 
-**Proposed simplified format:**
 ```json
 {
-  "registered": {
-    "automatic": 1,
-    "callable": 2,
-    "total": 3
-  },
+  "registered": 3,
   "failed": 0,
+  "deleted": 0,
+  "automatic_count": 1,
+  "callable_count": 2,
   "registered_actions": {
     "automatic": ["alert.created"],
     "callable": ["scale_service", "clear_cache"]
@@ -446,46 +458,32 @@ callable:
 }
 ```
 
-**OR keep similar to current:**
-```json
-{
-  "registered": 3,
-  "failed": 0,
-  "automatic_count": 1,
-  "callable_count": 2,
-  "failures": []
-}
-```
-
-**Rationale:**
-- Response doesn't need to echo back full action configs
-- Just confirm what was registered
-- Show counts for automatic vs callable
-- List slugs for reference
+**Key response fields:**
+- `registered` - Total count of successfully registered actions
+- `failed` - Count of actions that failed validation
+- `deleted` - Count of actions deleted during sync (not in new request)
+- `automatic_count` - Count of actions categorized as automatic
+- `callable_count` - Count of actions categorized as callable
+- `registered_actions.automatic` - Array of automatic action slugs
+- `registered_actions.callable` - Array of callable action slugs
+- `failures` - Array of failure details with `slug` and `reason`
 
 **Partial failure (207 Multi-Status):**
 ```json
 {
   "registered": 1,
   "failed": 1,
-  "actions": [
-    {
-      "slug": "scale_service",
-      "name": "Scale Service",
-      "action_type": "script",
-      "timeout": 120,
-      "trigger": {
-        "event_types_trigger": ["alert.action_triggered"]
-      },
-      "parameters": [...]
-    }
-  ],
+  "deleted": 0,
+  "automatic_count": 0,
+  "callable_count": 1,
+  "registered_actions": {
+    "automatic": [],
+    "callable": ["scale_service"]
+  },
   "failures": [
     {
       "slug": "clear_cache",
-      "errors": [
-        "Http is required for http action_type"
-      ]
+      "reason": "Callable actions must have a name for UI display"
     }
   ]
 }
@@ -499,14 +497,14 @@ callable:
 
 ### Callable Actions (Show in UI)
 
-**With `parameter_definitions`** - Backend generates UI forms:
+**Triggers ending in `.action_triggered`** - Backend generates UI forms from `parameters`:
 - `alert.action_triggered` - Actions on alerts (e.g., "Restart Service", "Escalate")
 - `incident.action_triggered` - Actions on incidents (e.g., "Page Oncall", "Run Playbook")
 - `action.triggered` - Standalone actions (e.g., "Clear Cache", "Deploy Hotfix")
 
 ### Automatic Actions (Background Only)
 
-**Without `parameter_definitions`** - No UI, run automatically:
+**All other event triggers** - No UI, run automatically:
 - `alert.created`, `alert.updated` - Triggered when alerts are created/updated
 - `incident.created`, `incident.updated` - Triggered when incidents are created/updated
 
@@ -520,16 +518,16 @@ callable:
 
 ## How Backend Differentiates
 
-The presence of `parameter_definitions` determines UI interaction:
+The backend categorizes actions based on the `trigger` field:
 
-| Has parameter_definitions? | Backend Behavior |
-|----------------------------|------------------|
-| ✅ Yes | Show in UI as **interactive button**, generate form fields, allow user triggering |
-| ❌ No | Show in UI as **read-only badge**, display info only, no user interaction |
+| Trigger Pattern | Backend Behavior |
+|-----------------|------------------|
+| `action.triggered` or `*.action_triggered` | Show in UI as **interactive button**, generate form fields from `parameters`, allow user triggering |
+| All other event types | Show in UI as **read-only badge**, display info only, no user interaction |
 
 **Simple rule:**
-- `parameter_definitions` present = **Callable** (clickable button with form)
-- `parameter_definitions` absent = **Automatic** (visible badge, read-only)
+- Trigger = `action.triggered` or ends with `.action_triggered` → **Callable** (clickable button with form)
+- Trigger = any other event type → **Automatic** (visible badge, read-only)
 
 **Both are visible in UI**, but only callable actions can be triggered by users.
 
@@ -580,7 +578,7 @@ callable:
 **API Payload (POST /rec/v1/actions):**
 ```json
 {
-  "automatic": [
+  "actions": [
     {
       "slug": "alert.created",
       "action_type": "script",
@@ -594,9 +592,7 @@ callable:
       "trigger": "incident.created",
       "timeout": 30,
       "description": "Handles incident.created events"
-    }
-  ],
-  "callable": [
+    },
     {
       "slug": "restart_service",
       "name": "Restart Service",
@@ -636,9 +632,14 @@ callable:
 }
 ```
 
-**Key improvements:**
-1. Split into `automatic` and `callable` arrays (mirrors config structure)
-2. Both include `action_type` and `timeout` (for UI display/monitoring)
+**Backend categorization:**
+- `alert.created`, `incident.created` → **Automatic** (trigger is event type)
+- `restart_service` → **Callable** (trigger is `alert.action_triggered`)
+- `clear_cache` → **Callable** (trigger is `action.triggered`)
+
+**Key points:**
+1. Single `actions` array (backend categorizes by `trigger` field)
+2. All actions include `action_type` and `timeout` (for UI display/monitoring)
 3. Trigger as simple string (not nested object)
 4. Execution details stay on connector (script path, http config, etc.)
 

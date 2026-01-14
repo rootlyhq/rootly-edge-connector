@@ -93,13 +93,12 @@ func main() {
 	// Initialize API client with version for User-Agent header
 	apiClient := api.NewClient(cfg.Rootly.APIURL, cfg.Rootly.APIPath, cfg.Rootly.APIKey, version)
 
-	// Register all actions with backend (automatic + callable)
+	// Register all actions with backend (backend categorizes as automatic/callable)
 	registrationRequest := api.ConvertActionsToRegistrations(actionsConfig.Actions)
 
-	if len(registrationRequest.Automatic) > 0 || len(registrationRequest.Callable) > 0 {
+	if len(registrationRequest.Actions) > 0 {
 		log.WithFields(log.Fields{
-			"automatic_count": len(registrationRequest.Automatic),
-			"callable_count":  len(registrationRequest.Callable),
+			"actions_count": len(registrationRequest.Actions),
 		}).Info("Registering actions with backend")
 
 		resp, err := apiClient.RegisterActions(context.Background(), registrationRequest)

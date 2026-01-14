@@ -348,15 +348,16 @@ func TestClient_RegisterActions(t *testing.T) {
 		require.NoError(t, err)
 
 		w.WriteHeader(http.StatusCreated)
+		// Mock backend response with categorization
 		json.NewEncoder(w).Encode(api.RegisterActionsResponse{
 			Registered: struct {
 				Automatic int `json:"automatic"`
 				Callable  int `json:"callable"`
 				Total     int `json:"total"`
 			}{
-				Automatic: len(receivedRequest.Automatic),
-				Callable:  len(receivedRequest.Callable),
-				Total:     len(receivedRequest.Automatic) + len(receivedRequest.Callable),
+				Automatic: 1, // Backend counted automatic actions
+				Callable:  1, // Backend counted callable actions
+				Total:     len(receivedRequest.Actions),
 			},
 			Failed:   0,
 			Failures: []api.ActionFailure{},
@@ -367,15 +368,13 @@ func TestClient_RegisterActions(t *testing.T) {
 	client := api.NewClient(server.URL, "", "test-key", "test")
 
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{
+		Actions: []api.ActionRegistration{
 			{
 				Slug:       "alert.created",
 				ActionType: "script",
 				Trigger:    "alert.created",
 				Timeout:    300,
 			},
-		},
-		Callable: []api.CallableActionRegistration{
 			{
 				Slug:       "restart_server",
 				Name:       "Restart Server",
@@ -671,10 +670,8 @@ func TestClient_RegisterActions_PartialFailure(t *testing.T) {
 	client := api.NewClient(server.URL, "", "test-key", "test")
 
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{
+		Actions: []api.ActionRegistration{
 			{Slug: "working_action", ActionType: "script", Trigger: "alert.created", Timeout: 300},
-		},
-		Callable: []api.CallableActionRegistration{
 			{Slug: "broken_action", Name: "Broken Action", ActionType: "http", Trigger: "action.triggered", Timeout: 300},
 		},
 	}
@@ -696,10 +693,9 @@ func TestClient_RegisterActions_NetworkError(t *testing.T) {
 	client := api.NewClient("http://invalid-host-that-does-not-exist-12345.local", "", "test-key", "test")
 
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{
+		Actions: []api.ActionRegistration{
 			{Slug: "test", ActionType: "script", Trigger: "alert.created", Timeout: 300},
 		},
-		Callable: []api.CallableActionRegistration{},
 	}
 
 	resp, err := client.RegisterActions(context.Background(), request)
@@ -778,10 +774,9 @@ func TestClient_RegisterActions_InvalidResponse(t *testing.T) {
 	client := api.NewClient(server.URL, "", "test-key", "test")
 
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{
+		Actions: []api.ActionRegistration{
 			{Slug: "test", ActionType: "script", Trigger: "alert.created", Timeout: 300},
 		},
-		Callable: []api.CallableActionRegistration{},
 	}
 
 	resp, err := client.RegisterActions(context.Background(), request)
@@ -986,8 +981,7 @@ func TestClient_RegisterActions_EmptyActions(t *testing.T) {
 
 	client := api.NewClient(server.URL, "", "test-key", "test")
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{},
-		Callable:  []api.CallableActionRegistration{},
+		Actions: []api.ActionRegistration{},
 	}
 	resp, err := client.RegisterActions(context.Background(), request)
 
@@ -1005,10 +999,9 @@ func TestClient_RegisterActions_RateLimit(t *testing.T) {
 	client := api.NewClient(server.URL, "", "test-key", "test")
 
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{
+		Actions: []api.ActionRegistration{
 			{Slug: "test", ActionType: "script", Trigger: "alert.created", Timeout: 300},
 		},
-		Callable: []api.CallableActionRegistration{},
 	}
 
 	resp, err := client.RegisterActions(context.Background(), request)
@@ -1083,10 +1076,8 @@ func TestClient_RegisterActions_MultiStatus(t *testing.T) {
 	client := api.NewClient(server.URL, "", "test-key", "test")
 
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{
+		Actions: []api.ActionRegistration{
 			{Slug: "success", ActionType: "script", Trigger: "alert.created", Timeout: 300},
-		},
-		Callable: []api.CallableActionRegistration{
 			{Slug: "failed_action", Name: "Failed", ActionType: "script", Trigger: "action.triggered", Timeout: 300},
 		},
 	}
@@ -1135,10 +1126,9 @@ func TestClient_RegisterActions_HTTPError(t *testing.T) {
 	client := api.NewClient(server.URL, "", "test-key", "test")
 
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{
+		Actions: []api.ActionRegistration{
 			{Slug: "test", ActionType: "script", Trigger: "alert.created", Timeout: 300},
 		},
-		Callable: []api.CallableActionRegistration{},
 	}
 
 	resp, err := client.RegisterActions(context.Background(), request)
@@ -1233,8 +1223,7 @@ func TestClient_RegisterActions_ContextCancelled(t *testing.T) {
 	client := api.NewClient(server.URL, "", "test-key", "test")
 
 	request := api.RegisterActionsRequest{
-		Automatic: []api.AutomaticActionRegistration{},
-		Callable:  []api.CallableActionRegistration{},
+		Actions: []api.ActionRegistration{},
 	}
 
 	// Create context that's already canceled

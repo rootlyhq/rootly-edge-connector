@@ -74,30 +74,22 @@ type TriggerRegistration struct {
 	EventTypes []string `json:"event_types_trigger"` // Event types that trigger this action (always an array)
 }
 
-// AutomaticActionRegistration represents an automatic action (on: section)
-type AutomaticActionRegistration struct {
-	Slug        string `json:"slug"`        // Event type (e.g., "alert.created")
-	ActionType  string `json:"action_type"` // "script" or "http"
-	Trigger     string `json:"trigger"`     // Event type (simplified, not nested)
-	Timeout     int    `json:"timeout"`     // Execution timeout
-	Description string `json:"description"` // Description for UI display
-}
-
-// CallableActionRegistration represents a callable action (callable: section)
-type CallableActionRegistration struct {
-	Slug        string            `json:"slug"`                  // Action slug (callable key)
-	Name        string            `json:"name"`                  // Display name in UI
-	Description string            `json:"description,omitempty"` // Description in UI
+// ActionRegistration represents an action registration sent to the backend
+// Backend categorizes as automatic or callable based on trigger pattern
+type ActionRegistration struct {
+	Slug        string            `json:"slug"`                  // Action slug (machine identifier)
+	Name        string            `json:"name,omitempty"`        // Display name in UI (optional, backend humanizes if empty)
+	Description string            `json:"description,omitempty"` // Description in UI (optional)
 	ActionType  string            `json:"action_type"`           // "script" or "http"
-	Trigger     string            `json:"trigger"`               // Event type (simplified)
+	Trigger     string            `json:"trigger"`               // Event type (e.g., "action.triggered", "alert.created")
 	Timeout     int               `json:"timeout"`               // Execution timeout
-	Parameters  []ActionParameter `json:"parameters"`            // UI form fields
+	Parameters  []ActionParameter `json:"parameters,omitempty"`  // UI form fields (optional, for callable actions)
 }
 
-// RegisterActionsRequest represents the NEW request body for POST /rec/v1/actions
+// RegisterActionsRequest represents the request body for POST /rec/v1/actions
+// Backend categorizes actions based on trigger patterns
 type RegisterActionsRequest struct {
-	Automatic []AutomaticActionRegistration `json:"automatic"`
-	Callable  []CallableActionRegistration  `json:"callable"`
+	Actions []ActionRegistration `json:"actions"`
 }
 
 // RegisterActionsResponse represents the response from POST /rec/v1/actions
@@ -107,6 +99,10 @@ type RegisterActionsResponse struct {
 		Callable  int `json:"callable"`
 		Total     int `json:"total"`
 	} `json:"registered"`
+	RegisteredActions struct {
+		Automatic []string `json:"automatic"`
+		Callable  []string `json:"callable"`
+	} `json:"registered_actions"`
 	Failed   int             `json:"failed"`
 	Failures []ActionFailure `json:"failures"`
 }

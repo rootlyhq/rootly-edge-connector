@@ -178,10 +178,9 @@ func (c *Client) RegisterActions(ctx context.Context, request RegisterActionsReq
 
 	// Log HTTP request at DEBUG level
 	log.WithFields(log.Fields{
-		"method":          "POST",
-		"url":             url,
-		"automatic_count": len(request.Automatic),
-		"callable_count":  len(request.Callable),
+		"method":        "POST",
+		"url":           url,
+		"actions_count": len(request.Actions),
 	}).Debug("HTTP request")
 
 	// Log full request body at TRACE level (pretty-printed JSON)

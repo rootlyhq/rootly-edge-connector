@@ -114,6 +114,44 @@ func ValidateActions(cfg *ActionsConfig) error {
 	return nil
 }
 
+// ValidateActionsConfig validates the on/callable sections before conversion
+// This ensures trigger patterns match their section (callable vs automatic)
+func ValidateActionsConfig(cfg *ActionsConfig) error {
+	// Validate "on" section (automatic actions)
+	for eventType := range cfg.On {
+		if isCallableTriggerPattern(eventType) {
+			return fmt.Errorf("on.%s: automatic actions cannot use callable trigger patterns (action.triggered or *.action_triggered)", eventType)
+		}
+	}
+
+	// Validate "callable" section (callable actions)
+	for slug, callableAction := range cfg.Callable {
+		// Get trigger (defaults to action.triggered if not specified)
+		trigger := callableAction.Trigger
+		if trigger == "" {
+			trigger = "action.triggered"
+		}
+
+		// Check if trigger matches callable pattern
+		if !isCallableTriggerPattern(trigger) {
+			return fmt.Errorf("callable.%s: callable actions must use callable trigger patterns (action.triggered or *.action_triggered), got: %s", slug, trigger)
+		}
+
+		// Callable actions must have a name for UI display
+		if callableAction.Name == "" {
+			return fmt.Errorf("callable.%s: name is required for callable actions (displayed in UI)", slug)
+		}
+	}
+
+	return nil
+}
+
+// isCallableTriggerPattern checks if a trigger pattern indicates a callable action
+// Matches: "action.triggered", "alert.action_triggered", "incident.action_triggered"
+func isCallableTriggerPattern(trigger string) bool {
+	return trigger == "action.triggered" || strings.HasSuffix(trigger, ".action_triggered")
+}
+
 // validateAction validates a single action
 func validateAction(action *Action) error {
 	// ID is required (machine identifier)

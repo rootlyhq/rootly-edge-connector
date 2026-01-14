@@ -19,6 +19,7 @@ This document explains what the Rails backend needs to implement for the Edge Co
       "name": "Restart Production Server",
       "action_type": "script",
       "description": "Restarts the production server with graceful shutdown",
+      "trigger": "action.triggered",
       "timeout": 300,
       "parameters": [
         {
@@ -28,6 +29,14 @@ This document explains what the Rails backend needs to implement for the Edge Co
           "description": "Service to restart"
         }
       ]
+    },
+    {
+      "slug": "alert.created",
+      "name": "",
+      "action_type": "script",
+      "trigger": "alert.created",
+      "timeout": 300,
+      "parameters": []
     }
   ]
 }
@@ -37,6 +46,7 @@ This document explains what the Rails backend needs to implement for the Edge Co
 - `slug` (REQUIRED): Machine identifier for matching (e.g., "restart_server")
 - `name` (OPTIONAL): Human-readable display name (e.g., "Restart Production Server")
 - `description` (OPTIONAL): Multi-line description for UI
+- `trigger` (REQUIRED): Event type that triggers this action (e.g., "action.triggered", "alert.created")
 
 **Backend implementation requirements:**
 
@@ -44,7 +54,34 @@ This document explains what the Rails backend needs to implement for the Edge Co
 - Extract connector from auth token
 - All actions belong to this specific edge connector instance
 
-### 2. Sync Actions (Upsert + Delete)
+### 2. Categorize Actions (Automatic vs Callable)
+
+The backend categorizes actions based on their `trigger` field:
+
+**Callable actions** (user-initiated, appear as buttons in UI):
+- Trigger: `action.triggered`, `alert.action_triggered`, or `incident.action_triggered`
+- Require a `name` field for UI display
+- Can have 0+ parameters for user input
+
+**Automatic actions** (event-triggered, run on event):
+- Trigger: Any other event type (`alert.created`, `incident.created`, etc.)
+- Name is optional (not displayed in UI)
+- Parameters come from event data, not user input
+
+```ruby
+def categorize_action(action_data)
+  trigger = action_data[:trigger]
+
+  # Check if trigger indicates callable action
+  if trigger == "action.triggered" || trigger.end_with?(".action_triggered")
+    :callable
+  else
+    :automatic
+  end
+end
+```
+
+### 3. Sync Actions (Upsert + Delete)
 
 ```ruby
 # Sync behavior implementation:
@@ -53,34 +90,56 @@ def sync_actions(connector, new_actions)
   current_slugs = connector.actions.source_connector.pluck(:slug)
   new_slugs = new_actions.map { |a| a[:slug] }
 
+  automatic_count = 0
+  callable_count = 0
+  registered_actions = { automatic: [], callable: [] }
+  failures = []
+
   # Upsert (create or update) - match by SLUG
   new_actions.each do |action_data|
-    connector.actions.find_or_initialize_by(slug: action_data[:slug]) do |action|
-      action.source = "connector"
-    end.tap do |action|
-      # IMPORTANT: If name is provided, use it and parameterize for slug validation
-      # If name is empty, connector already sent valid slug
-      if action_data[:name].present?
-        # Verify name parameterizes to the provided slug
-        expected_slug = action_data[:name].parameterize(separator: "_")
-        if expected_slug != action_data[:slug]
-          # Name doesn't match slug - this is OK, they're independent
-          # Store name as-is for display
-        end
-        action.name = action_data[:name]
-      else
-        # No name provided - store slug as name (backend won't humanize)
-        action.name = action_data[:slug]
+    begin
+      # Categorize action based on trigger
+      category = categorize_action(action_data)
+
+      # Validate callable actions have a name
+      if category == :callable && action_data[:name].blank?
+        failures << {
+          slug: action_data[:slug],
+          reason: "Callable actions must have a name for UI display"
+        }
+        next
       end
 
+      action = connector.actions.find_or_initialize_by(slug: action_data[:slug]) do |a|
+        a.source = "connector"
+      end
+
+      # Update action fields
+      action.name = action_data[:name].presence || action_data[:slug]
       action.action_type = action_data[:action_type]
       action.description = action_data[:description]
+      action.trigger = action_data[:trigger]
       action.timeout = action_data[:timeout]
+      action.category = category  # Store for filtering
       action.metadata = {
         parameters: action_data[:parameters],
         http: action_data[:http]  # For HTTP actions
       }.compact
       action.save!
+
+      # Track categorization
+      if category == :callable
+        callable_count += 1
+        registered_actions[:callable] << action_data[:slug]
+      else
+        automatic_count += 1
+        registered_actions[:automatic] << action_data[:slug]
+      end
+    rescue => e
+      failures << {
+        slug: action_data[:slug],
+        reason: e.message
+      }
     end
   end
 
@@ -88,24 +147,35 @@ def sync_actions(connector, new_actions)
   to_delete = current_slugs - new_slugs
   connector.actions.source_connector.where(slug: to_delete).destroy_all
 
-  # Return counts
+  # Return categorized response
   {
-    registered: new_actions.size,
-    failed: 0,  # Or count validation failures
-    actions: new_actions,
-    failures: []
+    registered: {
+      automatic: automatic_count,
+      callable: callable_count,
+      total: automatic_count + callable_count
+    },
+    registered_actions: registered_actions,
+    failed: failures.size,
+    failures: failures
   }
 end
 ```
 
-### 3. Response Format
+### 4. Response Format
 
 **Success (201 Created):**
 ```json
 {
-  "registered": 2,
+  "registered": {
+    "automatic": 1,
+    "callable": 2,
+    "total": 3
+  },
+  "registered_actions": {
+    "automatic": ["alert.created"],
+    "callable": ["restart_server", "clear_cache"]
+  },
   "failed": 0,
-  "actions": [...],  // Echoes back the registered actions
   "failures": []
 }
 ```
@@ -113,19 +183,35 @@ end
 **Partial success (207 Multi-Status):**
 ```json
 {
-  "registered": 1,
+  "registered": {
+    "automatic": 1,
+    "callable": 1,
+    "total": 2
+  },
+  "registered_actions": {
+    "automatic": ["alert.created"],
+    "callable": ["restart_server"]
+  },
   "failed": 1,
-  "actions": [...],  // Successfully registered actions
   "failures": [
     {
-      "name": "invalid_action",
-      "reason": "Name cannot be blank"
+      "slug": "invalid_action",
+      "reason": "Callable actions must have a name for UI display"
     }
   ]
 }
 ```
 
-### 4. What Happens on Connector Restart
+**Key response fields:**
+- `registered.automatic` - Count of automatic (event-triggered) actions
+- `registered.callable` - Count of callable (user-initiated) actions
+- `registered.total` - Total count of successfully registered actions
+- `registered_actions.automatic` - Array of automatic action slugs
+- `registered_actions.callable` - Array of callable action slugs
+- `failed` - Count of actions that failed validation
+- `failures` - Array of failure details with `slug` and `reason`
+
+### 5. What Happens on Connector Restart
 
 **Scenario 1: Action slug changed**
 ```yaml
@@ -200,6 +286,10 @@ end
 4. **Sync behavior**: Upsert actions by slug, delete actions not in request
 5. **Match on slug**: Always use `slug` for finding/matching actions
 6. **Name handling**: If `name` is empty, use `slug` as `name` (don't humanize)
+7. **Trigger-based categorization**: Backend categorizes actions as automatic/callable based on `trigger` field
+   - Callable: `action.triggered`, `alert.action_triggered`, `incident.action_triggered`
+   - Automatic: All other event types (`alert.created`, `incident.created`, etc.)
+8. **Callable validation**: Callable actions must have a `name` field for UI display
 
 ## Slug Format
 

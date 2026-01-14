@@ -72,6 +72,12 @@ func LoadActions(path string) (*ActionsConfig, error) {
 		return nil, fmt.Errorf("failed to parse actions: %w", err)
 	}
 
+	// Validate on/callable sections before conversion
+	// This checks that trigger patterns match their section (callable vs automatic)
+	if err := ValidateActionsConfig(&cfg); err != nil {
+		return nil, fmt.Errorf("invalid actions config: %w", err)
+	}
+
 	// Convert on/callable format to internal Actions array
 	cfg.ConvertToActions()
 
