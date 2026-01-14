@@ -234,3 +234,145 @@ func TestConvertActionsToRegistrations_HTTPAction(t *testing.T) {
 	// Note: HTTP configuration is NOT included in ActionRegistration
 	// The connector doesn't send HTTP config to backend during registration
 }
+
+func TestConvertActionsToRegistrations_CallableWithZeroParameters(t *testing.T) {
+	tests := []struct {
+		name        string
+		action      config.Action
+		expectedLen int
+	}{
+		{
+			name: "standalone callable action with no parameters",
+			action: config.Action{
+				ID:          "clear_cache",
+				Name:        "Clear Cache",
+				Description: "Clear all application caches",
+				Type:        "script",
+				Timeout:     60,
+				Trigger: config.TriggerConfig{
+					EventType:  "action.triggered",
+					ActionName: "clear_cache",
+				},
+				ParameterDefinitions: []config.ParameterDefinition{}, // Empty parameters
+			},
+			expectedLen: 0,
+		},
+		{
+			name: "alert action with no parameters",
+			action: config.Action{
+				ID:          "restart_all",
+				Name:        "Restart All Services",
+				Description: "Restart all services without configuration",
+				Type:        "script",
+				Timeout:     120,
+				Trigger: config.TriggerConfig{
+					EventType:  "alert.action_triggered",
+					ActionName: "restart_all",
+				},
+				ParameterDefinitions: nil, // Nil parameters
+			},
+			expectedLen: 0,
+		},
+		{
+			name: "incident action with no parameters",
+			action: config.Action{
+				ID:          "page_oncall",
+				Name:        "Page On-Call Engineer",
+				Description: "Page the on-call engineer immediately",
+				Type:        "http",
+				Timeout:     30,
+				Trigger: config.TriggerConfig{
+					EventType:  "incident.action_triggered",
+					ActionName: "page_oncall",
+				},
+				// No ParameterDefinitions field at all
+			},
+			expectedLen: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actions := []config.Action{tt.action}
+			request := api.ConvertActionsToRegistrations(actions)
+
+			// Action should be sent to backend (callable based on trigger pattern)
+			require.Len(t, request.Actions, 1)
+
+			reg := request.Actions[0]
+			assert.Equal(t, tt.action.ID, reg.Slug)
+			assert.Equal(t, tt.action.Name, reg.Name)
+			assert.Equal(t, tt.action.Type, reg.ActionType)
+			assert.Equal(t, tt.action.Description, reg.Description)
+			assert.Equal(t, tt.action.Timeout, reg.Timeout)
+			assert.Equal(t, tt.action.Trigger.EventType, reg.Trigger)
+
+			// Parameters should be empty (0 length)
+			assert.Len(t, reg.Parameters, tt.expectedLen, "Should have zero parameters")
+
+			// Verify trigger pattern is callable
+			isCallableTrigger := reg.Trigger == "action.triggered" ||
+				reg.Trigger == "alert.action_triggered" ||
+				reg.Trigger == "incident.action_triggered"
+			assert.True(t, isCallableTrigger, "Trigger should be a callable pattern")
+		})
+	}
+}
+
+func TestConvertActionsToRegistrations_MixedParameterCounts(t *testing.T) {
+	actions := []config.Action{
+		{
+			ID:      "action_with_params",
+			Name:    "Action With Parameters",
+			Type:    "script",
+			Timeout: 60,
+			Trigger: config.TriggerConfig{
+				EventType: "action.triggered",
+			},
+			ParameterDefinitions: []config.ParameterDefinition{
+				{Name: "param1", Type: "string", Required: true},
+				{Name: "param2", Type: "boolean", Default: false},
+			},
+		},
+		{
+			ID:      "action_no_params",
+			Name:    "Action Without Parameters",
+			Type:    "script",
+			Timeout: 60,
+			Trigger: config.TriggerConfig{
+				EventType: "action.triggered",
+			},
+			ParameterDefinitions: []config.ParameterDefinition{}, // Zero params
+		},
+		{
+			ID:      "auto_action",
+			Name:    "",
+			Type:    "script",
+			Timeout: 60,
+			Trigger: config.TriggerConfig{
+				EventType: "alert.created", // Automatic action
+			},
+			// No parameters (automatic actions don't need them)
+		},
+	}
+
+	request := api.ConvertActionsToRegistrations(actions)
+
+	// All actions sent to backend
+	require.Len(t, request.Actions, 3)
+
+	// First action: callable with 2 parameters
+	assert.Equal(t, "action_with_params", request.Actions[0].Slug)
+	assert.Equal(t, "action.triggered", request.Actions[0].Trigger)
+	assert.Len(t, request.Actions[0].Parameters, 2)
+
+	// Second action: callable with 0 parameters
+	assert.Equal(t, "action_no_params", request.Actions[1].Slug)
+	assert.Equal(t, "action.triggered", request.Actions[1].Trigger)
+	assert.Len(t, request.Actions[1].Parameters, 0)
+
+	// Third action: automatic with 0 parameters (expected)
+	assert.Equal(t, "auto_action", request.Actions[2].Slug)
+	assert.Equal(t, "alert.created", request.Actions[2].Trigger)
+	assert.Len(t, request.Actions[2].Parameters, 0)
+}

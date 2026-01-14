@@ -1458,3 +1458,237 @@ func TestParameterValidation_ListTypeDuplicatesAndInvalidDefault(t *testing.T) {
 	// Should fail on duplicates first
 	assert.Contains(t, err.Error(), "options must be unique")
 }
+
+// Callable Action Trigger Validation Tests
+
+func TestValidateAction_CallableWithValidTriggers(t *testing.T) {
+	tests := []struct {
+		name    string
+		trigger string
+	}{
+		{"standalone callable", "action.triggered"},
+		{"alert callable", "alert.action_triggered"},
+		{"incident callable", "incident.action_triggered"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			action := &config.Action{
+				ID:   "test_action",
+				Name: "Test Action", // Has name = callable intent
+				Type: "script",
+				Script: filepath.Join(t.TempDir(), "test.sh"),
+				SourceType: "local",
+				Trigger: config.TriggerConfig{
+					EventType: tt.trigger,
+				},
+				Timeout: 10,
+			}
+
+			// Create dummy script file
+			err := createDummyScript(action.Script)
+			require.NoError(t, err)
+
+			err = config.ValidateActions(&config.ActionsConfig{Actions: []config.Action{*action}})
+			assert.NoError(t, err, "Callable action with trigger %s should be valid", tt.trigger)
+		})
+	}
+}
+
+func TestValidateAction_CallableWithBadTriggers(t *testing.T) {
+	tests := []struct {
+		name        string
+		trigger     string
+		expectedErr string
+	}{
+		{
+			name:        "callable with alert.created trigger",
+			trigger:     "alert.created",
+			expectedErr: "action 'test_action' has a name field (indicating callable intent) but uses trigger 'alert.created' which is for automatic actions",
+		},
+		{
+			name:        "callable with incident.created trigger",
+			trigger:     "incident.created",
+			expectedErr: "action 'test_action' has a name field (indicating callable intent) but uses trigger 'incident.created' which is for automatic actions",
+		},
+		{
+			name:        "callable with alert.updated trigger",
+			trigger:     "alert.updated",
+			expectedErr: "action 'test_action' has a name field (indicating callable intent) but uses trigger 'alert.updated' which is for automatic actions",
+		},
+		{
+			name:        "callable with incident.updated trigger",
+			trigger:     "incident.updated",
+			expectedErr: "action 'test_action' has a name field (indicating callable intent) but uses trigger 'incident.updated' which is for automatic actions",
+		},
+		{
+			name:        "callable with custom event trigger",
+			trigger:     "custom.event.type",
+			expectedErr: "action 'test_action' has a name field (indicating callable intent) but uses trigger 'custom.event.type' which is for automatic actions",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			action := &config.Action{
+				ID:   "test_action",
+				Name: "Test Action", // Has name = callable intent
+				Type: "script",
+				Script: filepath.Join(t.TempDir(), "test.sh"),
+				SourceType: "local",
+				Trigger: config.TriggerConfig{
+					EventType: tt.trigger,
+				},
+				Timeout: 10,
+			}
+
+			// Create dummy script file
+			err := createDummyScript(action.Script)
+			require.NoError(t, err)
+
+			err = config.ValidateActions(&config.ActionsConfig{Actions: []config.Action{*action}})
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.expectedErr)
+		})
+	}
+}
+
+func TestValidateAction_CallableWithZeroParameters(t *testing.T) {
+	tests := []struct {
+		name    string
+		trigger string
+		params  []config.ParameterDefinition
+	}{
+		{
+			name:    "callable with no parameters (nil)",
+			trigger: "action.triggered",
+			params:  nil,
+		},
+		{
+			name:    "callable with empty parameters",
+			trigger: "alert.action_triggered",
+			params:  []config.ParameterDefinition{},
+		},
+		{
+			name:    "callable incident action with no parameters",
+			trigger: "incident.action_triggered",
+			params:  []config.ParameterDefinition{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			action := &config.Action{
+				ID:   "test_action",
+				Name: "Test Action", // Has name = callable intent
+				Type: "script",
+				Script: filepath.Join(t.TempDir(), "test.sh"),
+				SourceType: "local",
+				Trigger: config.TriggerConfig{
+					EventType: tt.trigger,
+				},
+				ParameterDefinitions: tt.params,
+				Timeout:              10,
+			}
+
+			// Create dummy script file
+			err := createDummyScript(action.Script)
+			require.NoError(t, err)
+
+			err = config.ValidateActions(&config.ActionsConfig{Actions: []config.Action{*action}})
+			assert.NoError(t, err, "Callable action with 0 parameters should be valid")
+		})
+	}
+}
+
+func TestValidateAction_AutomaticWithoutName(t *testing.T) {
+	// Automatic actions (without name) can use any event trigger
+	tests := []struct {
+		name    string
+		trigger string
+	}{
+		{"automatic alert.created", "alert.created"},
+		{"automatic alert.updated", "alert.updated"},
+		{"automatic incident.created", "incident.created"},
+		{"automatic incident.updated", "incident.updated"},
+		{"automatic custom.event", "custom.event.type"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			action := &config.Action{
+				ID:   "test_action",
+				Name: "", // No name = automatic action
+				Type: "script",
+				Script: filepath.Join(t.TempDir(), "test.sh"),
+				SourceType: "local",
+				Trigger: config.TriggerConfig{
+					EventType: tt.trigger,
+				},
+				Timeout: 10,
+			}
+
+			// Create dummy script file
+			err := createDummyScript(action.Script)
+			require.NoError(t, err)
+
+			err = config.ValidateActions(&config.ActionsConfig{Actions: []config.Action{*action}})
+			assert.NoError(t, err, "Automatic action (no name) with trigger %s should be valid", tt.trigger)
+		})
+	}
+}
+
+func TestValidateAction_MixedCallableAndAutomatic(t *testing.T) {
+	tempDir := t.TempDir()
+	script1 := filepath.Join(tempDir, "callable.sh")
+	script2 := filepath.Join(tempDir, "automatic.sh")
+
+	// Create dummy scripts
+	require.NoError(t, createDummyScript(script1))
+	require.NoError(t, createDummyScript(script2))
+
+	actions := []config.Action{
+		{
+			ID:   "callable_action",
+			Name: "Callable Action", // Has name = callable
+			Type: "script",
+			Script: script1,
+			SourceType: "local",
+			Trigger: config.TriggerConfig{
+				EventType: "action.triggered", // Valid callable trigger
+			},
+			ParameterDefinitions: []config.ParameterDefinition{},
+			Timeout:              10,
+		},
+		{
+			ID:   "automatic_action",
+			Name: "", // No name = automatic
+			Type: "script",
+			Script: script2,
+			SourceType: "local",
+			Trigger: config.TriggerConfig{
+				EventType: "alert.created", // Valid automatic trigger
+			},
+			Timeout: 10,
+		},
+	}
+
+	err := config.ValidateActions(&config.ActionsConfig{Actions: actions})
+	assert.NoError(t, err, "Mix of callable and automatic actions should be valid")
+}
+
+// Helper function to create dummy script files for testing
+func createDummyScript(path string) error {
+	// Ensure parent directory exists
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	// Create empty file
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return nil
+}

@@ -380,6 +380,110 @@ INFO[...] Registering callable actions with backend  callable_action_count=2
 INFO[...] Successfully registered callable actions   registered=2 failed=0
 ```
 
+## Action Types and Trigger Compatibility
+
+The Edge Connector supports two categories of actions based on how they are triggered:
+
+### Callable Actions (User-Initiated)
+
+**What are they?**
+- Actions that users manually trigger from the Rootly UI
+- Appear as buttons/forms in the UI
+- Can accept user input via parameter definitions
+- Require a `name` field for UI display
+
+**Compatible triggers:**
+- `action.triggered` - Standalone action (no associated alert/incident)
+- `alert.action_triggered` - Action triggered from an alert
+- `incident.action_triggered` - Action triggered from an incident
+
+**Example:**
+```yaml
+- id: restart_service
+  name: "Restart Service"  # ← Name field indicates callable intent
+  type: script
+  script: /opt/scripts/restart.sh
+  trigger:
+    event_type: "alert.action_triggered"  # ← Callable trigger
+  parameter_definitions:
+    - name: service_name
+      type: string
+      required: true
+  timeout: 300
+```
+
+### Automatic Actions (Event-Triggered)
+
+**What are they?**
+- Actions that automatically run when events occur
+- No user interaction required
+- Execute based on event patterns
+- Do NOT require a `name` field (name is optional)
+
+**Compatible triggers:**
+- `alert.created` - When a new alert is created
+- `alert.updated` - When an alert is updated
+- `alert.deleted` - When an alert is deleted
+- `incident.created` - When a new incident is created
+- `incident.updated` - When an incident is updated
+- `incident.deleted` - When an incident is deleted
+- Any custom event type from your monitoring system
+
+**Example:**
+```yaml
+- id: auto_remediation
+  name: ""  # ← Empty/no name = automatic action
+  type: script
+  script: /opt/scripts/auto-fix.sh
+  trigger:
+    event_type: "alert.created"  # ← Automatic trigger
+  parameters:
+    host: "{{ data.host }}"
+    severity: "{{ labels.severity }}"
+  timeout: 300
+```
+
+### Validation Rules
+
+The connector validates trigger compatibility at startup:
+
+✅ **Valid configurations:**
+```yaml
+# Callable with callable trigger
+- id: deploy
+  name: "Deploy Hotfix"
+  trigger:
+    event_type: "incident.action_triggered"
+
+# Automatic with automatic trigger
+- id: auto_fix
+  name: ""
+  trigger:
+    event_type: "alert.created"
+```
+
+❌ **Invalid configurations:**
+```yaml
+# Callable with automatic trigger - FAILS validation
+- id: deploy
+  name: "Deploy Hotfix"  # Has name = callable intent
+  trigger:
+    event_type: "alert.created"  # But uses automatic trigger
+    # ERROR: action has name field (callable) but uses automatic trigger
+```
+
+**Error message:**
+```
+action 'deploy' has a name field (indicating callable intent) but uses trigger 'alert.created' which is for automatic actions. Callable actions must use: action.triggered, alert.action_triggered, or incident.action_triggered
+```
+
+### Summary Table
+
+| Action Category | Requires Name? | Valid Triggers | Appears in UI? | User Input? |
+|----------------|----------------|----------------|----------------|-------------|
+| **Callable** | ✅ Yes (required) | `action.triggered`<br>`alert.action_triggered`<br>`incident.action_triggered` | ✅ Yes (as buttons/forms) | ✅ Yes (via parameter_definitions) |
+| **Automatic** | ❌ No (optional) | `alert.created`<br>`alert.updated`<br>`alert.deleted`<br>`incident.created`<br>`incident.updated`<br>`incident.deleted`<br>Custom events | ❌ No | ❌ No (uses event data) |
+
 ## Using Parameters in Scripts
 
 ### How Parameters Work
