@@ -153,7 +153,6 @@ func TestValidateActions_UniqueIDs(t *testing.T) {
 	actions := []config.Action{
 		{
 			ID:   "action_one",
-			Name: "Action One", // Names CAN be duplicate
 			Type: "http",
 			HTTP: &config.HTTPAction{
 				URL:    "https://example.com",
@@ -166,7 +165,6 @@ func TestValidateActions_UniqueIDs(t *testing.T) {
 		},
 		{
 			ID:   "action_two",
-			Name: "Action One", // Same name is OK, id must be unique
 			Type: "http",
 			HTTP: &config.HTTPAction{
 				URL:    "https://example.com",
@@ -727,7 +725,7 @@ func TestParameterValidation_ValidStringType(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -753,7 +751,7 @@ func TestParameterValidation_ValidNumberType(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -780,7 +778,7 @@ func TestParameterValidation_ValidBooleanType(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -807,7 +805,7 @@ func TestParameterValidation_ValidListType(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -834,7 +832,7 @@ func TestParameterValidation_EmptyParameterDefinitions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{}, // Empty is valid
 		Timeout:              10,
@@ -853,7 +851,7 @@ func TestParameterValidation_MultipleParameters(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -895,7 +893,7 @@ func TestParameterValidation_MissingName(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -920,7 +918,7 @@ func TestParameterValidation_MissingType(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -945,7 +943,7 @@ func TestParameterValidation_InvalidType(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -970,7 +968,7 @@ func TestParameterValidation_ListTypeMissingOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -996,7 +994,7 @@ func TestParameterValidation_ListTypeEmptyOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1022,7 +1020,7 @@ func TestParameterValidation_StringTypeWithOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1048,7 +1046,7 @@ func TestParameterValidation_NumberTypeWithOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1074,7 +1072,7 @@ func TestParameterValidation_BooleanTypeWithOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1102,7 +1100,7 @@ func TestParameterValidation_ListTypeDefaultInOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1128,7 +1126,7 @@ func TestParameterValidation_ListTypeDefaultNotInOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1157,7 +1155,7 @@ func TestParameterValidation_ListTypeNoDefault(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1183,7 +1181,7 @@ func TestParameterValidation_StringTypeWithDefault(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1208,7 +1206,7 @@ func TestParameterValidation_NumberTypeWithDefault(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1233,7 +1231,7 @@ func TestParameterValidation_BooleanTypeWithDefault(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1258,7 +1256,7 @@ func TestParameterValidation_MultipleListsWithDefaults(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1290,7 +1288,7 @@ func TestParameterValidation_MultipleListsOneInvalidDefault(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1327,7 +1325,7 @@ func TestParameterValidation_ListTypeDuplicateOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1357,7 +1355,7 @@ func TestParameterValidation_ListTypeUniqueOptions(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1382,7 +1380,7 @@ func TestParameterValidation_ListTypeSingleDuplicate(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1411,7 +1409,7 @@ func TestParameterValidation_ListTypeTripleDuplicate(t *testing.T) {
 			Method: "POST",
 		},
 		Trigger: config.TriggerConfig{
-			EventType: "action.triggered",
+			EventType: "alert.created",
 		},
 		ParameterDefinitions: []config.ParameterDefinition{
 			{
@@ -1434,6 +1432,7 @@ func TestParameterValidation_ListTypeTripleDuplicate(t *testing.T) {
 func TestParameterValidation_ListTypeDuplicatesAndInvalidDefault(t *testing.T) {
 	action := &config.Action{
 		ID:   "test",
+		Name: "Test Action", // Required for callable trigger
 		Type: "http",
 		HTTP: &config.HTTPAction{
 			URL:    "https://example.com",

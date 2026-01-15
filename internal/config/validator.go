@@ -178,6 +178,24 @@ func validateAction(action *Action) error {
 		return fmt.Errorf("trigger.event_type or trigger.event_types is required")
 	}
 
+	// Validate trigger compatibility with action classification
+	// Actions are classified as callable (user-initiated) or automatic (event-triggered) based on presence of Name field
+	for _, eventType := range eventTypes {
+		if action.Name != "" {
+			// Action has Name field = callable intent
+			// Must use callable trigger patterns: action.triggered, alert.action_triggered, incident.action_triggered
+			if !isCallableTriggerPattern(eventType) {
+				return fmt.Errorf("action '%s' has a name field (indicating callable intent) but uses trigger '%s' which is for automatic actions. Callable actions must use triggers: action.triggered, alert.action_triggered, or incident.action_triggered", action.ID, eventType)
+			}
+		} else {
+			// Action has no Name field = automatic intent
+			// Must NOT use callable trigger patterns
+			if isCallableTriggerPattern(eventType) {
+				return fmt.Errorf("action '%s' has no name field (indicating automatic intent) but uses callable trigger '%s'; automatic actions must use event triggers like alert.created or incident.updated", action.ID, eventType)
+			}
+		}
+	}
+
 	// Validate script action
 	if action.Type == "script" {
 		// Validate source type (only for script actions)
