@@ -67,12 +67,7 @@ test-all: test test-integration ## Run both unit and integration tests
 
 lint: ## Run linter
 	@echo "Running linter..."
-	@if command -v golangci-lint >/dev/null 2>&1; then \
-		golangci-lint run --timeout=5m; \
-	else \
-		echo "golangci-lint not installed. Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
-		exit 1; \
-	fi
+	@go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --timeout=5m
 
 fmt: ## Format code
 	@echo "Formatting code..."
@@ -81,12 +76,7 @@ fmt: ## Format code
 
 goimports: ## Run goimports
 	@echo "Running goimports..."
-	@if command -v goimports >/dev/null 2>&1; then \
-		goimports -w -local github.com/rootly/edge-connector ./cmd ./internal ./pkg ./tests; \
-	else \
-		echo "goimports not installed. Install with: go install golang.org/x/tools/cmd/goimports@latest"; \
-		exit 1; \
-	fi
+	@go tool goimports -w -local github.com/rootly/edge-connector ./cmd ./internal ./pkg ./tests
 
 vet: ## Run go vet
 	@echo "Running go vet..."
@@ -124,9 +114,12 @@ version: ## Show version
 # Development targets
 dev-setup: ## Setup development environment
 	@echo "Setting up development environment..."
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go mod download
 	@echo "Development setup complete!"
+	@echo ""
+	@echo "Tools are managed via Go 1.24's native 'go tool' command."
+	@echo "Tools are installed in go.mod with 'go get -tool <package>'."
+	@echo "Run 'make lint' or 'make goimports' to use the tools."
 
 docker-build-dev: ## Build development Docker image
 	@echo "Building development Docker image..."

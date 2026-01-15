@@ -183,7 +183,7 @@ exit 0
 				EventType: "alert.created",
 			},
 			Parameters: map[string]string{
-				"host": "{{ data.host }}",  // Alert data is flat in event.Data
+				"host": "{{ data.host }}", // Alert data is flat in event.Data
 			},
 			Timeout: 5,
 		},
@@ -287,7 +287,7 @@ func TestEndToEnd_HTTPAction(t *testing.T) {
 				Headers: map[string]string{
 					"Content-Type": "application/json",
 				},
-				Body: `{"title": "{{ title }}"}`,  // Liquid template syntax
+				Body: `{"title": "{{ title }}"}`, // Liquid template syntax
 			},
 			Timeout: 5,
 		},
