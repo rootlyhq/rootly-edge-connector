@@ -93,8 +93,3 @@ formatters:
     goimports:
       local-prefixes:
         - github.com/rootly/edge-connector
-
-output:
-  formats:
-    colored-line-number:
-      path: stdout
