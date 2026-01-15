@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -1474,10 +1475,10 @@ func TestValidateAction_CallableWithValidTriggers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			action := &config.Action{
-				ID:   "test_action",
-				Name: "Test Action", // Has name = callable intent
-				Type: "script",
-				Script: filepath.Join(t.TempDir(), "test.sh"),
+				ID:         "test_action",
+				Name:       "Test Action", // Has name = callable intent
+				Type:       "script",
+				Script:     filepath.Join(t.TempDir(), "test.sh"),
 				SourceType: "local",
 				Trigger: config.TriggerConfig{
 					EventType: tt.trigger,
@@ -1531,10 +1532,10 @@ func TestValidateAction_CallableWithBadTriggers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			action := &config.Action{
-				ID:   "test_action",
-				Name: "Test Action", // Has name = callable intent
-				Type: "script",
-				Script: filepath.Join(t.TempDir(), "test.sh"),
+				ID:         "test_action",
+				Name:       "Test Action", // Has name = callable intent
+				Type:       "script",
+				Script:     filepath.Join(t.TempDir(), "test.sh"),
 				SourceType: "local",
 				Trigger: config.TriggerConfig{
 					EventType: tt.trigger,
@@ -1579,10 +1580,10 @@ func TestValidateAction_CallableWithZeroParameters(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			action := &config.Action{
-				ID:   "test_action",
-				Name: "Test Action", // Has name = callable intent
-				Type: "script",
-				Script: filepath.Join(t.TempDir(), "test.sh"),
+				ID:         "test_action",
+				Name:       "Test Action", // Has name = callable intent
+				Type:       "script",
+				Script:     filepath.Join(t.TempDir(), "test.sh"),
 				SourceType: "local",
 				Trigger: config.TriggerConfig{
 					EventType: tt.trigger,
@@ -1617,10 +1618,10 @@ func TestValidateAction_AutomaticWithoutName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			action := &config.Action{
-				ID:   "test_action",
-				Name: "", // No name = automatic action
-				Type: "script",
-				Script: filepath.Join(t.TempDir(), "test.sh"),
+				ID:         "test_action",
+				Name:       "", // No name = automatic action
+				Type:       "script",
+				Script:     filepath.Join(t.TempDir(), "test.sh"),
 				SourceType: "local",
 				Trigger: config.TriggerConfig{
 					EventType: tt.trigger,
@@ -1649,10 +1650,10 @@ func TestValidateAction_MixedCallableAndAutomatic(t *testing.T) {
 
 	actions := []config.Action{
 		{
-			ID:   "callable_action",
-			Name: "Callable Action", // Has name = callable
-			Type: "script",
-			Script: script1,
+			ID:         "callable_action",
+			Name:       "Callable Action", // Has name = callable
+			Type:       "script",
+			Script:     script1,
 			SourceType: "local",
 			Trigger: config.TriggerConfig{
 				EventType: "action.triggered", // Valid callable trigger
@@ -1661,10 +1662,10 @@ func TestValidateAction_MixedCallableAndAutomatic(t *testing.T) {
 			Timeout:              10,
 		},
 		{
-			ID:   "automatic_action",
-			Name: "", // No name = automatic
-			Type: "script",
-			Script: script2,
+			ID:         "automatic_action",
+			Name:       "", // No name = automatic
+			Type:       "script",
+			Script:     script2,
 			SourceType: "local",
 			Trigger: config.TriggerConfig{
 				EventType: "alert.created", // Valid automatic trigger
