@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-01-16
+
+### Fixed
+- Improved error message when script path is not within allowed_script_paths to be more actionable and user-friendly
+- Error message now includes the attempted path, list of allowed paths, and clear fix instructions
+
 ## [0.0.2] - 2026-01-14
 
 ### Added
@@ -65,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Go script test timeout for Windows CI (increased to 30s)
 - golangci-lint v2 configuration
 
-[unreleased]: https://github.com/rootlyhq/rootly-edge-connector/compare/v0.0.2...HEAD
+[unreleased]: https://github.com/rootlyhq/rootly-edge-connector/compare/v0.0.3...HEAD
+[0.0.3]: https://github.com/rootlyhq/rootly-edge-connector/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/rootlyhq/rootly-edge-connector/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/rootlyhq/rootly-edge-connector/releases/tag/v0.0.1
