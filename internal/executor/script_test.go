@@ -184,7 +184,7 @@ echo "test"
 			} else {
 				assert.Equal(t, 1, result.ExitCode)
 				assert.NotNil(t, result.Error)
-				assert.Contains(t, result.Error.Error(), "not allowed")
+				assert.Contains(t, result.Error.Error(), "is not within allowed paths")
 			}
 		})
 	}
@@ -842,7 +842,7 @@ func TestScriptRunner_IsAllowedPath_AbsErrorOnScriptPath(t *testing.T) {
 
 	// Should fail because isAllowedPath returns false when Abs fails
 	assert.NotNil(t, result.Error)
-	assert.Contains(t, result.Error.Error(), "not allowed")
+	assert.Contains(t, result.Error.Error(), "is not within allowed paths")
 }
 
 func TestScriptRunner_IsAllowedPath_AbsErrorOnAllowedPath(t *testing.T) {
@@ -942,4 +942,157 @@ sys.exit(0)
 		// Neither python3 nor python available
 		assert.NotNil(t, result.Error)
 	}
+}
+
+// Tests for improved error messages
+
+func TestScriptRunner_PathNotAllowed_SinglePath(t *testing.T) {
+	// Test error message when script is not in the single allowed path
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping on Windows - path handling differs")
+	}
+
+	tmpDir := t.TempDir()
+	allowedDir := filepath.Join(tmpDir, "allowed")
+	forbiddenDir := filepath.Join(tmpDir, "forbidden")
+
+	err := os.Mkdir(allowedDir, 0755)
+	require.NoError(t, err)
+	err = os.Mkdir(forbiddenDir, 0755)
+	require.NoError(t, err)
+
+	scriptPath := filepath.Join(forbiddenDir, "test.sh")
+	err = os.WriteFile(scriptPath, []byte("#!/bin/bash\necho 'test'"), 0755)
+	require.NoError(t, err)
+
+	runner := executor.NewScriptRunner([]string{allowedDir}, nil)
+
+	action := &config.Action{
+		ID:         "forbidden_path",
+		Type:       "script",
+		SourceType: "local",
+		Script:     scriptPath,
+		Timeout:    5,
+	}
+
+	result := runner.Run(context.Background(), action, map[string]string{})
+
+	// Verify error message contains helpful information
+	require.NotNil(t, result.Error)
+	errorMsg := result.Error.Error()
+
+	// Check that the error message contains all expected elements
+	assert.Contains(t, errorMsg, "is not within allowed paths", "Error should explain the path is not allowed")
+	assert.Contains(t, errorMsg, scriptPath, "Error should include the attempted script path")
+	assert.Contains(t, errorMsg, allowedDir, "Error should show the allowed path")
+	assert.Contains(t, errorMsg, "security.allowed_script_paths", "Error should mention the config setting")
+	assert.Contains(t, errorMsg, "config.yml", "Error should mention the config file")
+	assert.Contains(t, errorMsg, "allowed_script_paths: []", "Error should suggest allowing all paths")
+	assert.Equal(t, 1, result.ExitCode)
+}
+
+func TestScriptRunner_PathNotAllowed_MultiplePaths(t *testing.T) {
+	// Test error message when script is not in any of the multiple allowed paths
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping on Windows - path handling differs")
+	}
+
+	tmpDir := t.TempDir()
+	allowedDir1 := filepath.Join(tmpDir, "allowed1")
+	allowedDir2 := filepath.Join(tmpDir, "allowed2")
+	forbiddenDir := filepath.Join(tmpDir, "forbidden")
+
+	err := os.Mkdir(allowedDir1, 0755)
+	require.NoError(t, err)
+	err = os.Mkdir(allowedDir2, 0755)
+	require.NoError(t, err)
+	err = os.Mkdir(forbiddenDir, 0755)
+	require.NoError(t, err)
+
+	scriptPath := filepath.Join(forbiddenDir, "test.sh")
+	err = os.WriteFile(scriptPath, []byte("#!/bin/bash\necho 'test'"), 0755)
+	require.NoError(t, err)
+
+	runner := executor.NewScriptRunner([]string{allowedDir1, allowedDir2}, nil)
+
+	action := &config.Action{
+		ID:         "forbidden_path_multi",
+		Type:       "script",
+		SourceType: "local",
+		Script:     scriptPath,
+		Timeout:    5,
+	}
+
+	result := runner.Run(context.Background(), action, map[string]string{})
+
+	// Verify error message shows all allowed paths
+	require.NotNil(t, result.Error)
+	errorMsg := result.Error.Error()
+
+	assert.Contains(t, errorMsg, "is not within allowed paths")
+	assert.Contains(t, errorMsg, allowedDir1, "Error should show first allowed path")
+	assert.Contains(t, errorMsg, allowedDir2, "Error should show second allowed path")
+	assert.Contains(t, errorMsg, "security.allowed_script_paths")
+	assert.Equal(t, 1, result.ExitCode)
+}
+
+func TestScriptRunner_PathAllowed_ErrorMessageNotShown(t *testing.T) {
+	// Test that when path is allowed, no error occurs
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping shell script test on Windows")
+	}
+
+	tmpDir := t.TempDir()
+	allowedDir := filepath.Join(tmpDir, "allowed")
+
+	err := os.Mkdir(allowedDir, 0755)
+	require.NoError(t, err)
+
+	scriptPath := filepath.Join(allowedDir, "test.sh")
+	err = os.WriteFile(scriptPath, []byte("#!/bin/bash\necho 'success'\nexit 0"), 0755)
+	require.NoError(t, err)
+
+	runner := executor.NewScriptRunner([]string{allowedDir}, nil)
+
+	action := &config.Action{
+		ID:         "allowed_path",
+		Type:       "script",
+		SourceType: "local",
+		Script:     scriptPath,
+		Timeout:    5,
+	}
+
+	result := runner.Run(context.Background(), action, map[string]string{})
+
+	// Should succeed without any path-related error
+	require.NoError(t, result.Error)
+	assert.Equal(t, 0, result.ExitCode)
+	assert.Contains(t, result.Stdout, "success")
+}
+
+func TestScriptRunner_NoAllowedPaths_ErrorMessageFormat(t *testing.T) {
+	// Test that when allowed_script_paths is empty, the error message
+	// should indicate "all paths" if somehow the check is triggered
+	// (this is mostly for documentation - in practice empty paths allows all)
+
+	// This test verifies the error message format when constructing the message
+	// with empty allowed paths, though the actual execution path wouldn't reach
+	// this error in normal operation
+
+	runner := executor.NewScriptRunner([]string{}, nil)
+
+	// Use a non-existent script to avoid the actual execution
+	action := &config.Action{
+		ID:         "test_empty_paths",
+		Type:       "script",
+		SourceType: "local",
+		Script:     "/nonexistent/script.sh",
+		Timeout:    5,
+	}
+
+	result := runner.Run(context.Background(), action, map[string]string{})
+
+	// With empty allowed paths, all paths are allowed, so we get "script not found" error instead
+	require.NotNil(t, result.Error)
+	assert.Contains(t, result.Error.Error(), "script not found")
 }

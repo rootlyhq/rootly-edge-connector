@@ -62,10 +62,24 @@ func (r *ScriptRunner) Run(ctx context.Context, action *config.Action, params ma
 
 	// Validate script path
 	if !r.isAllowedPath(action.Script) {
+		var allowedPathsMsg string
+		if len(r.allowedPaths) == 0 {
+			allowedPathsMsg = "all paths (no restrictions)"
+		} else {
+			allowedPathsMsg = fmt.Sprintf("%v", r.allowedPaths)
+		}
+
 		return reporter.ScriptResult{
 			ExitCode:   1,
 			DurationMs: 0,
-			Error:      fmt.Errorf("script path not allowed: %s", action.Script),
+			Error: fmt.Errorf(
+				"script path '%s' is not within allowed paths. "+
+					"Allowed paths: %s. "+
+					"To fix: add your script directory to 'security.allowed_script_paths' in config.yml, "+
+					"or set 'allowed_script_paths: []' to allow all paths",
+				action.Script,
+				allowedPathsMsg,
+			),
 		}
 	}
 
