@@ -24,7 +24,7 @@ Prints all received parameters and environment variables to stdout. Use this to 
 Shows how to handle different scenarios based on event severity or other parameters.
 
 **What it does**:
-- Reads `REC_PARAM_SEVERITY` and `REC_PARAM_EVENT_TYPE`
+- Reads `REC_PARAM_SEVERITY` and `REC_PARAM_SUMMARY`
 - Executes different logic for critical/high/medium/low severity
 - Uses bash `case` statement for branching
 
@@ -86,26 +86,36 @@ Scripts receive parameters as environment variables with the `REC_PARAM_` prefix
 
 | YAML Parameter | Environment Variable |
 |----------------|---------------------|
-| `event_id: "123"` | `REC_PARAM_EVENT_ID=123` |
+| `alert_id: "123"` | `REC_PARAM_ALERT_ID=123` |
+| `summary: "Database timeout"` | `REC_PARAM_SUMMARY=Database timeout` |
 | `severity: "critical"` | `REC_PARAM_SEVERITY=critical` |
 | `host: "db-01"` | `REC_PARAM_HOST=db-01` |
 
 ### Example in actions.yml:
 ```yaml
-actions:
-  - name: my_action
+on:
+  alert.created:
+    script: /path/to/your-script.sh
     parameters:
-      event_id: "{{ alert.id }}"
-      severity: "{{ alert.severity }}"
+      alert_id: "{{ id }}"
+      summary: "{{ summary }}"
+      severity: "{{ labels.severity }}"
+      host: "{{ data.host }}"
+      service: "{{ services[0].name }}"
 ```
 
 ### Accessing in script:
 ```bash
 #!/bin/bash
-EVENT_ID="$REC_PARAM_EVENT_ID"
+ALERT_ID="$REC_PARAM_ALERT_ID"
+SUMMARY="$REC_PARAM_SUMMARY"
 SEVERITY="$REC_PARAM_SEVERITY"
+HOST="$REC_PARAM_HOST"
+SERVICE="$REC_PARAM_SERVICE"
 
-echo "Processing event $EVENT_ID with severity $SEVERITY"
+echo "Processing alert: $SUMMARY"
+echo "Alert ID: $ALERT_ID, Severity: $SEVERITY"
+echo "Affected: $SERVICE on $HOST"
 ```
 
 ## Testing Without Mock Server
@@ -114,14 +124,16 @@ You can test scripts directly by setting environment variables:
 
 ```bash
 # Test the echo script
-REC_PARAM_EVENT_ID="test-123" \
+REC_PARAM_ALERT_ID="test-123" \
+REC_PARAM_SUMMARY="Database timeout detected" \
 REC_PARAM_SEVERITY="critical" \
 REC_PARAM_HOST="db-01" \
+REC_PARAM_SERVICE="postgres" \
 ./scripts/test-echo.sh
 
 # Test the conditional script
 REC_PARAM_SEVERITY="critical" \
-REC_PARAM_EVENT_TYPE="alert.created" \
+REC_PARAM_SUMMARY="High CPU usage" \
 ./scripts/test-conditional.sh
 
 # Test the failure script

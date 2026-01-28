@@ -1,17 +1,21 @@
 #!/bin/bash
 # Test script demonstrating conditional logic
 # Shows how to handle different severities or conditions
+#
+# Expected parameters (passed as REC_PARAM_* environment variables):
+#   severity    -> REC_PARAM_SEVERITY
+#   summary     -> REC_PARAM_SUMMARY
 
 set -e
 
 SEVERITY="${REC_PARAM_SEVERITY:-unknown}"
-EVENT_TYPE="${REC_PARAM_EVENT_TYPE:-unknown}"
+SUMMARY="${REC_PARAM_SUMMARY:-unknown}"
 
 echo "========================================"
 echo "Conditional Test Script"
 echo "========================================"
 echo ""
-echo "Event Type: $EVENT_TYPE"
+echo "Summary: $SUMMARY"
 echo "Severity: $SEVERITY"
 echo ""
 
