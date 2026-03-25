@@ -14,7 +14,7 @@ jobs:
       fail-fast: false  # Don't cancel other jobs if one fails
       matrix:
         os: [ubuntu-22.04, ubuntu-24.04, macos-latest, windows-latest]
-        go: ['1.24']
+        go: ['1.25']
 
     steps:
       - name: Checkout code
@@ -52,9 +52,6 @@ jobs:
             sudo dpkg -i packages-microsoft-prod.deb
             sudo apt-get update
             sudo apt-get install -y powershell
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            # Install PowerShell on macOS
-            brew install --cask powershell
           fi
 
       - name: Run unit tests
@@ -82,7 +79,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
