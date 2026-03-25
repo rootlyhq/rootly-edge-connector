@@ -55,7 +55,7 @@ jobs:
           elif [ "$RUNNER_OS" == "macOS" ]; then
             # Install PowerShell on macOS
             brew update
-            brew install --cask powershell
+            brew install --cask powershell@preview
           fi
 
       - name: Run unit tests
