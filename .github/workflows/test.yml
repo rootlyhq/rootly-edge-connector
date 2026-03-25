@@ -52,10 +52,6 @@ jobs:
             sudo dpkg -i packages-microsoft-prod.deb
             sudo apt-get update
             sudo apt-get install -y powershell
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            # Install PowerShell on macOS
-            brew update
-            brew install --cask powershell@preview
           fi
 
       - name: Run unit tests
