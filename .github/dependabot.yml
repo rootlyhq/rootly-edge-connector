@@ -9,6 +9,9 @@ updates:
     labels:
       - "dependencies"
       - "go"
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
     groups:
       minor-and-patch:
         applies-to: version-updates
@@ -25,3 +28,5 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    cooldown:
+      default-days: 3
