@@ -3,7 +3,7 @@ module github.com/rootly/edge-connector
 go 1.25.0
 
 require (
-	github.com/go-git/go-git/v5 v5.17.1
+	github.com/go-git/go-git/v5 v5.17.2
 	github.com/gosimple/slug v1.15.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/natefinch/lumberjack v2.0.0+incompatible
