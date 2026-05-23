@@ -11,6 +11,13 @@ import (
 	"github.com/rootly/edge-connector/internal/metrics"
 )
 
+// String constants for log field keys
+const (
+	fieldDeliveryID = "delivery_id"
+	fieldEventID    = "event_id"
+	fieldEventType  = "event_type"
+)
+
 // Executor interface for processing events
 type Executor interface {
 	Execute(ctx context.Context, event api.Event)
@@ -75,15 +82,15 @@ func (p *Pool) Submit(event api.Event) {
 			metrics.WorkerPoolQueueSize.Set(float64(len(p.queue)))
 		}
 		log.WithFields(log.Fields{
-			"delivery_id": event.ID,
-			"event_id":    event.EventID,
-			"event_type":  event.Type,
+			fieldDeliveryID: event.ID,
+			fieldEventID:    event.EventID,
+			fieldEventType:  event.Type,
 		}).Debug("Event submitted to worker pool")
 	default:
 		log.WithFields(log.Fields{
-			"delivery_id": event.ID,
-			"event_id":    event.EventID,
-			"event_type":  event.Type,
+			fieldDeliveryID: event.ID,
+			fieldEventID:    event.EventID,
+			fieldEventType:  event.Type,
 		}).Warn("Worker pool queue is full, dropping event")
 	}
 }
@@ -105,10 +112,10 @@ func (p *Pool) worker(ctx context.Context, workerID int) {
 				return
 			}
 			log.WithFields(log.Fields{
-				"worker_id":   workerID,
-				"delivery_id": event.ID,
-				"event_id":    event.EventID,
-				"event_type":  event.Type,
+				"worker_id":     workerID,
+				fieldDeliveryID: event.ID,
+				fieldEventID:    event.EventID,
+				fieldEventType:  event.Type,
 			}).Debug("Worker processing event")
 			p.executor.Execute(ctx, event)
 		}

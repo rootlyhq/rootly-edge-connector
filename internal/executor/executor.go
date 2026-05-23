@@ -17,6 +17,22 @@ import (
 	"github.com/rootly/edge-connector/internal/reporter"
 )
 
+// String constants for log field keys and common values used across the executor package
+const (
+	fieldActionName      = "action_name"
+	fieldName            = "name"
+	fieldSlug            = "slug"
+	fieldTimeout         = "timeout"
+	fieldDurationMs      = "duration_ms"
+	fieldOutput          = "output"
+	fieldStatusCode      = "status_code"
+	actionTypeHTTP       = "http"
+	actionTypeScript     = "script"
+	eventActionTriggered = "action.triggered"
+	methodPOST           = "POST"
+	interpreterPython3   = "python3"
+)
+
 // Reporter interface for reporting execution results
 type Reporter interface {
 	Report(ctx context.Context, deliveryID, actionName, actionUUID string, result reporter.ScriptResult) error
@@ -58,7 +74,7 @@ func (e *Executor) Execute(ctx context.Context, event api.Event) {
 
 		// Check if action_name exists in data (for action_triggered events)
 		reportedActionName := "none"
-		if actionNameRaw, ok := event.Data["action_name"]; ok {
+		if actionNameRaw, ok := event.Data[fieldActionName]; ok {
 			if actionNameStr, ok := actionNameRaw.(string); ok && actionNameStr != "" {
 				logFields["data_action_name"] = actionNameStr
 				reportedActionName = actionNameStr // Use actual action name in report
@@ -91,11 +107,11 @@ func (e *Executor) Execute(ctx context.Context, event api.Event) {
 	}
 
 	log.WithFields(log.Fields{
-		"action_name": action.Name,
-		"action_type": action.Type,
-		"delivery_id": event.ID,
-		"event_id":    event.EventID,
-		"event_type":  event.Type,
+		fieldActionName: action.Name,
+		"action_type":   action.Type,
+		"delivery_id":   event.ID,
+		"event_id":      event.EventID,
+		"event_type":    event.Type,
 	}).Info("Executing action for event")
 
 	// Track events currently running
@@ -111,7 +127,7 @@ func (e *Executor) Execute(ctx context.Context, event api.Event) {
 	params := e.prepareParameters(action, event)
 
 	// Execute based on action type
-	if action.Type == "http" {
+	if action.Type == actionTypeHTTP {
 		result = e.httpExecutor.Execute(ctx, action, event, params)
 	} else {
 		// Script action
@@ -169,7 +185,7 @@ func (e *Executor) matchesAction(event api.Event, action *config.Action) bool {
 	// Check action slug/name (for action_triggered events)
 	// Supports two matching strategies:
 	// 1. event.Action.Slug (preferred - from Action metadata object)
-	// 2. event.Data["action_name"] (fallback - when Action metadata is null)
+	// 2. event.Data[fieldActionName] (fallback - when Action metadata is null)
 	// Matches against trigger.action_name (or defaults to action.ID if not specified)
 
 	// Get expected action name from trigger (defaults to action.ID if not specified)
@@ -185,7 +201,7 @@ func (e *Executor) matchesAction(event api.Event, action *config.Action) bool {
 
 	// Strategy 2: Check data.action_name field (fallback for when Action is null)
 	// This handles cases where backend sends action_name in data but not as Action metadata
-	if actionNameRaw, ok := event.Data["action_name"]; ok {
+	if actionNameRaw, ok := event.Data[fieldActionName]; ok {
 		if actionNameStr, ok := actionNameRaw.(string); ok {
 			// If action_name is specified in trigger (or defaults to ID), check it matches
 			if expectedActionName != "" && actionNameStr != expectedActionName {
@@ -199,7 +215,7 @@ func (e *Executor) matchesAction(event api.Event, action *config.Action) bool {
 	// For action_triggered event types, we need action identity to match
 	// If expectedActionName is set (from trigger or defaulted to ID), require matching
 	eventType := event.Type
-	isActionTriggered := strings.HasSuffix(eventType, ".action_triggered") || eventType == "action.triggered"
+	isActionTriggered := strings.HasSuffix(eventType, ".action_triggered") || eventType == eventActionTriggered
 
 	if isActionTriggered && expectedActionName != "" {
 		// This is an action_triggered event but we can't verify which action
@@ -288,9 +304,9 @@ func (e *Executor) prepareTemplateContext(tmplStr string, event api.Event) map[s
 	// Allows templates to use {{ action.name }}, {{ action.slug }}, etc.
 	if event.Action != nil {
 		context["action"] = map[string]interface{}{
-			"id":   event.Action.ID,
-			"name": event.Action.Name,
-			"slug": event.Action.Slug,
+			"id":      event.Action.ID,
+			fieldName: event.Action.Name,
+			fieldSlug: event.Action.Slug,
 		}
 	}
 

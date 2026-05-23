@@ -13,6 +13,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// String constants for HTTP methods and log field keys
+const (
+	methodGET            = "GET"
+	methodPOST           = "POST"
+	methodPATCH          = "PATCH"
+	fieldURL             = "url"
+	fieldError           = "error"
+	fieldDuration        = "duration"
+	fieldStatus          = "status"
+	fieldBody            = "body"
+	fieldDeliveryID      = "delivery_id"
+	fieldExecutionStatus = "execution_status"
+)
+
 // Client represents a Rootly API client
 type Client struct {
 	httpClient *retryablehttp.Client
@@ -44,7 +58,7 @@ func (c *Client) FetchEvents(ctx context.Context, maxMessages, visibilityTimeout
 	url := fmt.Sprintf("%s%s/deliveries?max_messages=%d&visibility_timeout=%d",
 		c.baseURL, c.apiPath, maxMessages, visibilityTimeout)
 
-	req, err := retryablehttp.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := retryablehttp.NewRequestWithContext(ctx, methodGET, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -55,8 +69,8 @@ func (c *Client) FetchEvents(ctx context.Context, maxMessages, visibilityTimeout
 
 	// Log HTTP request at DEBUG level
 	log.WithFields(log.Fields{
-		"method": "GET",
-		"url":    url,
+		"method": methodGET,
+		fieldURL: url,
 		"headers": map[string]string{
 			"Authorization": redactToken(c.apiKey),
 			"Content-Type":  "application/json",
@@ -70,10 +84,10 @@ func (c *Client) FetchEvents(ctx context.Context, maxMessages, visibilityTimeout
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"method":   "GET",
-			"url":      url,
-			"error":    err.Error(),
-			"duration": duration.String(),
+			"method":      methodGET,
+			fieldURL:      url,
+			fieldError:    err.Error(),
+			fieldDuration: duration.String(),
 		}).Error("HTTP request failed")
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -81,10 +95,10 @@ func (c *Client) FetchEvents(ctx context.Context, maxMessages, visibilityTimeout
 
 	// Log HTTP response at DEBUG level
 	log.WithFields(log.Fields{
-		"method":   "GET",
-		"url":      url,
-		"status":   resp.StatusCode,
-		"duration": duration.String(),
+		"method":      methodGET,
+		fieldURL:      url,
+		fieldStatus:   resp.StatusCode,
+		fieldDuration: duration.String(),
 	}).Debug("HTTP response")
 
 	// Log rate limit headers from Rootly API
@@ -116,14 +130,14 @@ func (c *Client) FetchEvents(ctx context.Context, maxMessages, visibilityTimeout
 		var prettyJSON bytes.Buffer
 		if err := json.Indent(&prettyJSON, bodyBytes, "", "  "); err == nil {
 			log.WithFields(log.Fields{
-				"method": "GET",
-				"url":    url,
+				"method": methodGET,
+				fieldURL: url,
 			}).Tracef("HTTP response body:\n%s", prettyJSON.String())
 		} else {
 			log.WithFields(log.Fields{
-				"method": "GET",
-				"url":    url,
-				"body":   string(bodyBytes),
+				"method":  methodGET,
+				fieldURL:  url,
+				fieldBody: string(bodyBytes),
 			}).Trace("HTTP response body")
 		}
 	}
@@ -167,7 +181,7 @@ func (c *Client) RegisterActions(ctx context.Context, request RegisterActionsReq
 		return nil, fmt.Errorf("failed to marshal actions: %w", err)
 	}
 
-	req, err := retryablehttp.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
+	req, err := retryablehttp.NewRequestWithContext(ctx, methodPOST, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -178,8 +192,8 @@ func (c *Client) RegisterActions(ctx context.Context, request RegisterActionsReq
 
 	// Log HTTP request at DEBUG level
 	log.WithFields(log.Fields{
-		"method":        "POST",
-		"url":           url,
+		"method":        methodPOST,
+		fieldURL:        url,
 		"actions_count": len(request.Actions),
 	}).Debug("HTTP request")
 
@@ -188,8 +202,8 @@ func (c *Client) RegisterActions(ctx context.Context, request RegisterActionsReq
 		var prettyJSON bytes.Buffer
 		if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
 			log.WithFields(log.Fields{
-				"method": "POST",
-				"url":    url,
+				"method": methodPOST,
+				fieldURL: url,
 			}).Tracef("HTTP request body:\n%s", prettyJSON.String())
 		}
 	}
@@ -200,10 +214,10 @@ func (c *Client) RegisterActions(ctx context.Context, request RegisterActionsReq
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"method":   "POST",
-			"url":      url,
-			"error":    err.Error(),
-			"duration": duration.String(),
+			"method":      methodPOST,
+			fieldURL:      url,
+			fieldError:    err.Error(),
+			fieldDuration: duration.String(),
 		}).Error("HTTP request failed")
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -211,10 +225,10 @@ func (c *Client) RegisterActions(ctx context.Context, request RegisterActionsReq
 
 	// Log HTTP response at DEBUG level
 	log.WithFields(log.Fields{
-		"method":   "POST",
-		"url":      url,
-		"status":   resp.StatusCode,
-		"duration": duration.String(),
+		"method":      methodPOST,
+		fieldURL:      url,
+		fieldStatus:   resp.StatusCode,
+		fieldDuration: duration.String(),
 	}).Debug("HTTP response")
 
 	// Read response body
@@ -228,8 +242,8 @@ func (c *Client) RegisterActions(ctx context.Context, request RegisterActionsReq
 		var prettyJSON bytes.Buffer
 		if err := json.Indent(&prettyJSON, bodyBytes, "", "  "); err == nil {
 			log.WithFields(log.Fields{
-				"method": "POST",
-				"url":    url,
+				"method": methodPOST,
+				fieldURL: url,
 			}).Tracef("HTTP response body:\n%s", prettyJSON.String())
 		}
 	}
@@ -273,8 +287,8 @@ func (c *Client) MarkDeliveryAsRunning(ctx context.Context, deliveryID string) e
 
 	// Minimal payload: set execution_status to running with timestamp
 	ackPayload := map[string]interface{}{
-		"execution_status": "running",
-		"running_at":       time.Now().UTC().Format(time.RFC3339),
+		fieldExecutionStatus: "running",
+		"running_at":         time.Now().UTC().Format(time.RFC3339),
 	}
 
 	body, err := json.Marshal(ackPayload)
@@ -282,7 +296,7 @@ func (c *Client) MarkDeliveryAsRunning(ctx context.Context, deliveryID string) e
 		return fmt.Errorf("failed to marshal acknowledge payload: %w", err)
 	}
 
-	req, err := retryablehttp.NewRequestWithContext(ctx, "PATCH", url, bytes.NewBuffer(body))
+	req, err := retryablehttp.NewRequestWithContext(ctx, methodPATCH, url, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -293,9 +307,9 @@ func (c *Client) MarkDeliveryAsRunning(ctx context.Context, deliveryID string) e
 
 	// Log HTTP request at DEBUG level
 	log.WithFields(log.Fields{
-		"method":      "PATCH",
-		"url":         url,
-		"delivery_id": deliveryID,
+		"method":        methodPATCH,
+		fieldURL:        url,
+		fieldDeliveryID: deliveryID,
 	}).Debug("HTTP request")
 
 	// Log request body at TRACE level (pretty-printed JSON)
@@ -303,8 +317,8 @@ func (c *Client) MarkDeliveryAsRunning(ctx context.Context, deliveryID string) e
 		var prettyJSON bytes.Buffer
 		if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
 			log.WithFields(log.Fields{
-				"method": "PATCH",
-				"url":    url,
+				"method": methodPATCH,
+				fieldURL: url,
 			}).Tracef("HTTP request body:\n%s", prettyJSON.String())
 		}
 	}
@@ -315,10 +329,10 @@ func (c *Client) MarkDeliveryAsRunning(ctx context.Context, deliveryID string) e
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"method":   "PATCH",
-			"url":      url,
-			"error":    err.Error(),
-			"duration": duration.String(),
+			"method":      methodPATCH,
+			fieldURL:      url,
+			fieldError:    err.Error(),
+			fieldDuration: duration.String(),
 		}).Error("HTTP request failed")
 		return fmt.Errorf("request failed: %w", err)
 	}
@@ -326,10 +340,10 @@ func (c *Client) MarkDeliveryAsRunning(ctx context.Context, deliveryID string) e
 
 	// Log HTTP response at DEBUG level
 	log.WithFields(log.Fields{
-		"method":   "PATCH",
-		"url":      url,
-		"status":   resp.StatusCode,
-		"duration": duration.String(),
+		"method":      methodPATCH,
+		fieldURL:      url,
+		fieldStatus:   resp.StatusCode,
+		fieldDuration: duration.String(),
 	}).Debug("HTTP response")
 
 	// Log response body at TRACE level (pretty-printed if JSON)
@@ -342,14 +356,14 @@ func (c *Client) MarkDeliveryAsRunning(ctx context.Context, deliveryID string) e
 			var prettyJSON bytes.Buffer
 			if err := json.Indent(&prettyJSON, []byte(bodyStr), "", "  "); err == nil {
 				log.WithFields(log.Fields{
-					"method": "PATCH",
-					"url":    url,
+					"method": methodPATCH,
+					fieldURL: url,
 				}).Tracef("HTTP response body:\n%s", prettyJSON.String())
 			} else {
 				log.WithFields(log.Fields{
-					"method": "PATCH",
-					"url":    url,
-					"body":   bodyStr,
+					"method":  methodPATCH,
+					fieldURL:  url,
+					fieldBody: bodyStr,
 				}).Trace("HTTP response body")
 			}
 		}
@@ -370,7 +384,7 @@ func (c *Client) MarkDeliveryAsRunning(ctx context.Context, deliveryID string) e
 	}
 
 	log.WithFields(log.Fields{
-		"delivery_id": deliveryID,
+		fieldDeliveryID: deliveryID,
 	}).Debug("Marked delivery as running")
 
 	return nil
@@ -386,7 +400,7 @@ func (c *Client) ReportExecution(ctx context.Context, execution ExecutionResult)
 		return fmt.Errorf("failed to marshal execution result: %w", err)
 	}
 
-	req, err := retryablehttp.NewRequestWithContext(ctx, "PATCH", url, bytes.NewBuffer(body))
+	req, err := retryablehttp.NewRequestWithContext(ctx, methodPATCH, url, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -397,12 +411,12 @@ func (c *Client) ReportExecution(ctx context.Context, execution ExecutionResult)
 
 	// Log HTTP request at DEBUG level (with request body)
 	log.WithFields(log.Fields{
-		"method":           "PATCH",
-		"url":              url,
-		"delivery_id":      execution.DeliveryID,
-		"action_name":      execution.ExecutionActionID,
-		"execution_status": execution.ExecutionStatus,
-		"body_size":        len(body),
+		"method":             methodPATCH,
+		fieldURL:             url,
+		fieldDeliveryID:      execution.DeliveryID,
+		"action_name":        execution.ExecutionActionID,
+		fieldExecutionStatus: execution.ExecutionStatus,
+		"body_size":          len(body),
 	}).Debug("HTTP request")
 
 	// Log full request body at TRACE level (pretty-printed JSON)
@@ -410,14 +424,14 @@ func (c *Client) ReportExecution(ctx context.Context, execution ExecutionResult)
 		var prettyJSON bytes.Buffer
 		if err := json.Indent(&prettyJSON, body, "", "  "); err == nil {
 			log.WithFields(log.Fields{
-				"method": "PATCH",
-				"url":    url,
+				"method": methodPATCH,
+				fieldURL: url,
 			}).Tracef("HTTP request body:\n%s", prettyJSON.String())
 		} else {
 			log.WithFields(log.Fields{
-				"method": "PATCH",
-				"url":    url,
-				"body":   string(body),
+				"method":  methodPATCH,
+				fieldURL:  url,
+				fieldBody: string(body),
 			}).Trace("HTTP request body")
 		}
 	}
@@ -428,10 +442,10 @@ func (c *Client) ReportExecution(ctx context.Context, execution ExecutionResult)
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"method":   "PATCH",
-			"url":      url,
-			"error":    err.Error(),
-			"duration": duration.String(),
+			"method":      methodPATCH,
+			fieldURL:      url,
+			fieldError:    err.Error(),
+			fieldDuration: duration.String(),
 		}).Error("HTTP request failed")
 		return fmt.Errorf("request failed: %w", err)
 	}
@@ -439,10 +453,10 @@ func (c *Client) ReportExecution(ctx context.Context, execution ExecutionResult)
 
 	// Log HTTP response at DEBUG level
 	log.WithFields(log.Fields{
-		"method":   "PATCH",
-		"url":      url,
-		"status":   resp.StatusCode,
-		"duration": duration.String(),
+		"method":      methodPATCH,
+		fieldURL:      url,
+		fieldStatus:   resp.StatusCode,
+		fieldDuration: duration.String(),
 	}).Debug("HTTP response")
 
 	// Log response body at TRACE level (pretty-printed if JSON)
@@ -455,14 +469,14 @@ func (c *Client) ReportExecution(ctx context.Context, execution ExecutionResult)
 			var prettyJSON bytes.Buffer
 			if err := json.Indent(&prettyJSON, []byte(bodyStr), "", "  "); err == nil {
 				log.WithFields(log.Fields{
-					"method": "PATCH",
-					"url":    url,
+					"method": methodPATCH,
+					fieldURL: url,
 				}).Tracef("HTTP response body:\n%s", prettyJSON.String())
 			} else {
 				log.WithFields(log.Fields{
-					"method": "PATCH",
-					"url":    url,
-					"body":   bodyStr,
+					"method":  methodPATCH,
+					fieldURL:  url,
+					fieldBody: bodyStr,
 				}).Trace("HTTP response body")
 			}
 		}
@@ -484,11 +498,11 @@ func (c *Client) ReportExecution(ctx context.Context, execution ExecutionResult)
 	}
 
 	log.WithFields(log.Fields{
-		"delivery_id":      execution.DeliveryID,
-		"action_name":      execution.ExecutionActionID,
-		"execution_status": execution.ExecutionStatus,
-		"exit_code":        execution.ExecutionExitCode,
-		"duration_ms":      execution.ExecutionDurationMs,
+		fieldDeliveryID:      execution.DeliveryID,
+		"action_name":        execution.ExecutionActionID,
+		fieldExecutionStatus: execution.ExecutionStatus,
+		"exit_code":          execution.ExecutionExitCode,
+		"duration_ms":        execution.ExecutionDurationMs,
 	}).Info("Reported execution result")
 
 	return nil

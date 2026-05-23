@@ -14,6 +14,11 @@ import (
 	"github.com/rootly/edge-connector/internal/config"
 )
 
+// String constants for metric label names
+const (
+	labelStatus = "status"
+)
+
 var (
 	// Events metrics
 	EventsPolled *prometheus.CounterVec
@@ -61,7 +66,7 @@ func InitMetrics(customLabels map[string]string) {
 				Help:        "Total number of events polled from Rootly API",
 				ConstLabels: constLabels,
 			},
-			[]string{"status"}, // success, error
+			[]string{labelStatus}, // success, error
 		)
 
 		EventsReceived = prometheus.NewCounter(
@@ -78,7 +83,7 @@ func InitMetrics(customLabels map[string]string) {
 				Help:        "Total number of actions executed",
 				ConstLabels: constLabels,
 			},
-			[]string{"action_name", "action_type", "status"}, // status: completed, failed
+			[]string{"action_name", "action_type", labelStatus}, // status: completed, failed
 		)
 
 		ActionExecutionDuration = prometheus.NewHistogramVec(
@@ -97,7 +102,7 @@ func InitMetrics(customLabels map[string]string) {
 				Help:        "Total number of deliveries marked as running",
 				ConstLabels: constLabels,
 			},
-			[]string{"status"}, // success, error
+			[]string{labelStatus}, // success, error
 		)
 
 		EventsRunning = prometheus.NewGauge(
@@ -149,7 +154,7 @@ func InitMetrics(customLabels map[string]string) {
 				Help:        "Total number of git pulls executed",
 				ConstLabels: constLabels,
 			},
-			[]string{"repository", "status"}, // success, error
+			[]string{"repository", labelStatus}, // success, error
 		)
 
 		GitPullDuration = prometheus.NewHistogramVec(

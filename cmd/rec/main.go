@@ -23,6 +23,17 @@ import (
 	"github.com/rootly/edge-connector/pkg/git"
 )
 
+// String constants for log field keys and configuration values
+const (
+	fieldActionID    = "action_id"
+	fieldActionName  = "action_name"
+	logFormatJSON    = "json"
+	logFormatText    = "text"
+	logFormatColored = "colored"
+	timestampFormat  = "2006-01-02T15:04:05.000Z07:00"
+	logOutputStdout  = "stdout"
+)
+
 // version is set via ldflags during build
 var version = "dev"
 
@@ -134,9 +145,9 @@ func main() {
 			log.WithField("repo_url", action.GitOptions.URL).Info("Downloading Git repository")
 			if _, err := gitManager.Download(action.GitOptions); err != nil {
 				log.WithError(err).WithFields(log.Fields{
-					"repo_url":    action.GitOptions.URL,
-					"action_id":   action.ID,
-					"action_name": action.Name,
+					"repo_url":      action.GitOptions.URL,
+					fieldActionID:   action.ID,
+					fieldActionName: action.Name,
 				}).Error("Failed to download Git repository - action will be skipped")
 				continue // Skip this action but continue with others
 			}
@@ -145,10 +156,10 @@ func main() {
 			scriptPath, err := gitManager.GetScriptPath(action.GitOptions.URL, action.Script)
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
-					"script":      action.Script,
-					"repo_url":    action.GitOptions.URL,
-					"action_id":   action.ID,
-					"action_name": action.Name,
+					"script":        action.Script,
+					"repo_url":      action.GitOptions.URL,
+					fieldActionID:   action.ID,
+					fieldActionName: action.Name,
 				}).Error("Failed to get script path from repository - action will be skipped")
 				continue // Skip this action but continue with others
 			}
@@ -156,9 +167,9 @@ func main() {
 			// Update action to use local script path
 			action.Script = scriptPath
 			log.WithFields(log.Fields{
-				"action_id":   action.ID,
-				"action_name": action.Name,
-				"script_path": scriptPath,
+				fieldActionID:   action.ID,
+				fieldActionName: action.Name,
+				"script_path":   scriptPath,
 			}).Debug("Updated action script path from Git repository")
 		}
 	}
@@ -350,19 +361,19 @@ func initLogger(cfg *config.LoggingConfig) error {
 
 	// Set log format
 	switch cfg.Format {
-	case "json":
+	case logFormatJSON:
 		log.SetFormatter(&log.JSONFormatter{
-			TimestampFormat: "2006-01-02T15:04:05.000Z07:00",
+			TimestampFormat: timestampFormat,
 		})
-	case "text":
+	case logFormatText:
 		log.SetFormatter(&log.TextFormatter{
 			FullTimestamp:   true,
-			TimestampFormat: "2006-01-02T15:04:05.000Z07:00",
+			TimestampFormat: timestampFormat,
 		})
-	case "colored":
+	case logFormatColored:
 		log.SetFormatter(&log.TextFormatter{
 			FullTimestamp:   true,
-			TimestampFormat: "2006-01-02T15:04:05.000Z07:00",
+			TimestampFormat: timestampFormat,
 			ForceColors:     true, // Force colors even when not a TTY (for Docker logs)
 		})
 	default:
@@ -371,7 +382,7 @@ func initLogger(cfg *config.LoggingConfig) error {
 
 	// Set log output with rotation
 	var writer io.Writer
-	if cfg.Output == "stdout" || cfg.Output == "" {
+	if cfg.Output == logOutputStdout || cfg.Output == "" {
 		writer = os.Stdout
 	} else {
 		// Use lumberjack for log rotation

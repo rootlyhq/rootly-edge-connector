@@ -13,6 +13,7 @@ const (
 	defaultActionSourceType = "local"
 	defaultHTTPMethod       = "POST"
 	defaultGitBranch        = "main"
+	sourceTypeGit           = "git"
 )
 
 // Load loads and parses the main configuration file
