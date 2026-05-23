@@ -153,8 +153,8 @@ func (r *ScriptRunner) Run(ctx context.Context, action *config.Action, params ma
 	cmd.Stderr = &stderr
 
 	log.WithFields(log.Fields{
-		"script":  action.Script,
-		"timeout": timeout,
+		actionTypeScript: action.Script,
+		fieldTimeout:     timeout,
 	}).Info("Executing script")
 
 	// Execute command
@@ -172,8 +172,8 @@ func (r *ScriptRunner) Run(ctx context.Context, action *config.Action, params ma
 		result.ExitCode = -1
 		result.Error = fmt.Errorf("script timed out after %v", timeout)
 		log.WithFields(log.Fields{
-			"script":  action.Script,
-			"timeout": timeout,
+			actionTypeScript: action.Script,
+			fieldTimeout:     timeout,
 		}).Error("Script execution timed out")
 		return result
 	}
@@ -187,24 +187,24 @@ func (r *ScriptRunner) Run(ctx context.Context, action *config.Action, params ma
 		}
 		result.Error = err
 		log.WithFields(log.Fields{
-			"script":    action.Script,
-			"exit_code": result.ExitCode,
-			"error":     err,
+			actionTypeScript: action.Script,
+			"exit_code":      result.ExitCode,
+			"error":          err,
 		}).Error("Script execution failed")
 
 		// Log stdout at DEBUG level if present
 		if result.Stdout != "" {
 			log.WithFields(log.Fields{
-				"script": action.Script,
-				"output": "stdout",
+				actionTypeScript: action.Script,
+				fieldOutput:      "stdout",
 			}).Debugf("Script output (stdout):\n%s", result.Stdout)
 		}
 
 		// Log stderr at DEBUG level
 		if result.Stderr != "" {
 			log.WithFields(log.Fields{
-				"script": action.Script,
-				"output": "stderr",
+				actionTypeScript: action.Script,
+				fieldOutput:      "stderr",
 			}).Debugf("Script output (stderr):\n%s", result.Stderr)
 		}
 
@@ -213,23 +213,23 @@ func (r *ScriptRunner) Run(ctx context.Context, action *config.Action, params ma
 
 	result.ExitCode = 0
 	log.WithFields(log.Fields{
-		"script":      action.Script,
-		"duration_ms": result.DurationMs,
+		actionTypeScript: action.Script,
+		fieldDurationMs:  result.DurationMs,
 	}).Info("Script executed successfully")
 
 	// Log stdout at DEBUG level if present
 	if result.Stdout != "" {
 		log.WithFields(log.Fields{
-			"script": action.Script,
-			"output": "stdout",
+			actionTypeScript: action.Script,
+			fieldOutput:      "stdout",
 		}).Debugf("Script output (stdout):\n%s", result.Stdout)
 	}
 
 	// Log stderr at DEBUG level if present (even on success, stderr may have warnings)
 	if result.Stderr != "" {
 		log.WithFields(log.Fields{
-			"script": action.Script,
-			"output": "stderr",
+			actionTypeScript: action.Script,
+			fieldOutput:      "stderr",
 		}).Debugf("Script output (stderr):\n%s", result.Stderr)
 	}
 
@@ -281,8 +281,8 @@ func (r *ScriptRunner) detectInterpreter(scriptPath string) (string, []string) {
 	switch ext {
 	case ".py":
 		// Try python3 first (modern systems), fall back to python
-		if _, err := exec.LookPath("python3"); err == nil {
-			return "python3", nil
+		if _, err := exec.LookPath(interpreterPython3); err == nil {
+			return interpreterPython3, nil
 		}
 		return "python", nil
 	case ".sh":

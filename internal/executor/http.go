@@ -124,7 +124,7 @@ func (h *HTTPExecutor) Execute(ctx context.Context, action *config.Action, event
 	// Create HTTP request
 	method := action.HTTP.Method
 	if method == "" {
-		method = "POST"
+		method = methodPOST
 	}
 
 	// Apply timeout from action config
@@ -167,7 +167,7 @@ func (h *HTTPExecutor) Execute(ctx context.Context, action *config.Action, event
 	log.WithFields(log.Fields{
 		"method":       method,
 		"url":          parsedURL.String(),
-		"timeout":      timeout,
+		fieldTimeout:   timeout,
 		"has_body":     bodyReader != nil,
 		"body_preview": truncateString(bodyContent, 100),
 	}).Info("Executing HTTP request")
@@ -190,8 +190,8 @@ func (h *HTTPExecutor) Execute(ctx context.Context, action *config.Action, event
 	defer resp.Body.Close()
 
 	log.WithFields(log.Fields{
-		"status_code": resp.StatusCode,
-		"duration_ms": duration.Milliseconds(),
+		fieldStatusCode: resp.StatusCode,
+		fieldDurationMs: duration.Milliseconds(),
 	}).Debug("HTTP request completed, reading response body...")
 
 	// Record HTTP metrics
@@ -209,8 +209,8 @@ func (h *HTTPExecutor) Execute(ctx context.Context, action *config.Action, event
 	}
 
 	log.WithFields(log.Fields{
-		"body_length": len(respBody),
-		"status_code": resp.StatusCode,
+		"body_length":   len(respBody),
+		fieldStatusCode: resp.StatusCode,
 	}).Debug("HTTP response body read successfully")
 
 	// Build response
@@ -247,15 +247,15 @@ func (h *HTTPExecutor) Execute(ctx context.Context, action *config.Action, event
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		result.Error = nil
 		log.WithFields(log.Fields{
-			"status_code": resp.StatusCode,
-			"duration_ms": result.DurationMs,
+			fieldStatusCode: resp.StatusCode,
+			fieldDurationMs: result.DurationMs,
 		}).Info("HTTP request completed successfully")
 		log.Debug("Returning success result to executor")
 	} else {
 		result.Error = fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(respBody))
 		log.WithFields(log.Fields{
-			"status_code": resp.StatusCode,
-			"error":       string(respBody),
+			fieldStatusCode: resp.StatusCode,
+			"error":         string(respBody),
 		}).Error("HTTP request failed")
 		log.Debug("Returning error result to executor")
 	}
@@ -303,9 +303,9 @@ func (h *HTTPExecutor) prepareTemplateContext(tmplStr string, event api.Event) m
 	// Allows templates to use {{ action.name }}, {{ action.slug }}, etc.
 	if event.Action != nil {
 		context["action"] = map[string]interface{}{
-			"id":   event.Action.ID,
-			"name": event.Action.Name,
-			"slug": event.Action.Slug,
+			"id":      event.Action.ID,
+			fieldName: event.Action.Name,
+			fieldSlug: event.Action.Slug,
 		}
 	}
 

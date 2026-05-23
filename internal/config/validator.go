@@ -199,7 +199,7 @@ func validateAction(action *Action) error {
 	// Validate script action
 	if action.Type == "script" {
 		// Validate source type (only for script actions)
-		if action.SourceType != "local" && action.SourceType != "git" {
+		if action.SourceType != "local" && action.SourceType != sourceTypeGit {
 			return fmt.Errorf("source_type must be 'local' or 'git'")
 		}
 		if action.Script == "" {
@@ -227,14 +227,14 @@ func validateAction(action *Action) error {
 		if _, err := url.Parse(action.HTTP.URL); err != nil {
 			return fmt.Errorf("http.url is invalid: %w", err)
 		}
-		validMethods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
+		validMethods := []string{"GET", defaultHTTPMethod, "PUT", "PATCH", "DELETE"}
 		if !contains(validMethods, action.HTTP.Method) {
 			return fmt.Errorf("http.method must be one of: %s", strings.Join(validMethods, ", "))
 		}
 	}
 
 	// Validate git options
-	if action.SourceType == "git" {
+	if action.SourceType == sourceTypeGit {
 		if action.GitOptions == nil {
 			return fmt.Errorf("git_options is required for git source type")
 		}

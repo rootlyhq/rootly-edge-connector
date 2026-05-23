@@ -22,6 +22,11 @@ import (
 	"github.com/rootly/edge-connector/internal/metrics"
 )
 
+// String constants for default values
+const (
+	defaultBranch = "main"
+)
+
 // Repository represents a cloned Git repository
 type Repository struct {
 	Options    *config.GitOptions
@@ -75,7 +80,7 @@ func (m *Manager) Download(options *config.GitOptions) (*Repository, error) {
 	// Clone repository
 	branch := options.Branch
 	if branch == "" {
-		branch = "main"
+		branch = defaultBranch
 	}
 
 	log.WithFields(log.Fields{
