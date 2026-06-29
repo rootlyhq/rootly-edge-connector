@@ -1,0 +1,18 @@
+apiVersion: v2
+name: rootly-edge-connector
+description: Rootly Edge Connector - Execute custom actions in response to Rootly alerts and incidents
+type: application
+version: 0.1.0
+appVersion: "0.0.3"
+home: https://github.com/rootlyhq/rootly-edge-connector
+sources:
+  - https://github.com/rootlyhq/rootly-edge-connector
+maintainers:
+  - name: Rootly
+    email: support@rootly.com
+    url: https://rootly.com
+keywords:
+  - rootly
+  - incident-management
+  - edge-connector
+  - automation

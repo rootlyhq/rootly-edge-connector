@@ -1,0 +1,22 @@
+Rootly Edge Connector has been deployed!
+
+{{- if not .Values.rootly.apiKey }}
+{{- if not .Values.rootly.existingSecret }}
+
+WARNING: No API key configured!
+Set rootly.apiKey or rootly.existingSecret in your values.
+Get your API key from the Rootly dashboard.
+
+{{- end }}
+{{- end }}
+
+{{- if .Values.metrics.enabled }}
+
+Metrics are available at port {{ .Values.metrics.port }} on path {{ .Values.metrics.path }}
+
+To access metrics locally:
+  kubectl port-forward svc/{{ include "rootly-edge-connector.fullname" . }} {{ .Values.metrics.port }}:{{ .Values.metrics.port }}
+  curl http://localhost:{{ .Values.metrics.port }}{{ .Values.metrics.path }}
+{{- end }}
+
+Documentation: https://docs.rootly.com/edge-connectors-installation

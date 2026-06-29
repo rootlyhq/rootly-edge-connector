@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "rootly-edge-connector.fullname" . }}
+  labels:
+    {{- include "rootly-edge-connector.labels" . | nindent 4 }}
+data:
+  config.yml: |
+    app:
+      name: {{ include "rootly-edge-connector.fullname" . | quote }}
+
+    rootly:
+      api_url: {{ .Values.rootly.apiUrl | quote }}
+      api_path: {{ .Values.rootly.apiPath | quote }}
+
+    poller:
+      polling_wait_interval_ms: {{ .Values.poller.pollingWaitIntervalMs }}
+      visibility_timeout_sec: {{ .Values.poller.visibilityTimeoutSec }}
+      max_number_of_messages: {{ .Values.poller.maxNumberOfMessages }}
+      retry_on_error: {{ .Values.poller.retryOnError }}
+      retry_backoff: {{ .Values.poller.retryBackoff | quote }}
+      max_retries: {{ .Values.poller.maxRetries }}
+
+    pool:
+      max_number_of_workers: {{ .Values.pool.maxNumberOfWorkers }}
+      min_number_of_workers: {{ .Values.pool.minNumberOfWorkers }}
+      queue_size: {{ .Values.pool.queueSize }}
+      keep_alive_time_ms: {{ .Values.pool.keepAliveTimeMs }}
+      monitoring_period_ms: {{ .Values.pool.monitoringPeriodMs }}
+
+    security:
+      script_timeout: {{ .Values.security.scriptTimeout }}
+      {{- if .Values.security.allowedScriptPaths }}
+      allowed_script_paths:
+        {{- range .Values.security.allowedScriptPaths }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.security.globalEnv }}
+      global_env:
+        {{- range $key, $value := .Values.security.globalEnv }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+
+    logging:
+      level: {{ .Values.logging.level | quote }}
+      format: {{ .Values.logging.format | quote }}
+      output: {{ .Values.logging.output | quote }}
+
+    metrics:
+      enabled: {{ .Values.metrics.enabled }}
+      port: {{ .Values.metrics.port }}
+      path: {{ .Values.metrics.path | quote }}
+      {{- if .Values.metrics.labels }}
+      labels:
+        {{- range $key, $value := .Values.metrics.labels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
