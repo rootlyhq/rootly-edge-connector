@@ -80,3 +80,15 @@ Actions ConfigMap name.
 {{- printf "%s-actions" (include "rootly-edge-connector.fullname" .) }}
 {{- end }}
 {{- end }}
+
+{{/*
+Validate required values.
+*/}}
+{{- define "rootly-edge-connector.validateValues" -}}
+{{- if and (not .Values.rootly.apiKey) (not .Values.rootly.existingSecret) }}
+{{- fail "rootly.apiKey or rootly.existingSecret is required" }}
+{{- end }}
+{{- if and (not .Values.actionsYaml) (not .Values.existingActionsConfigMap) }}
+{{- fail "actionsYaml or existingActionsConfigMap is required" }}
+{{- end }}
+{{- end }}
