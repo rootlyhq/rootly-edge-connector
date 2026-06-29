@@ -1,0 +1,15 @@
+{{- if not .Values.existingActionsConfigMap }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "rootly-edge-connector.actionsConfigMapName" . }}
+  labels:
+    {{- include "rootly-edge-connector.labels" . | nindent 4 }}
+data:
+  actions.yml: |
+    {{- if .Values.actionsYaml }}
+    {{ .Values.actionsYaml | nindent 4 }}
+    {{- else }}
+    # No actions configured. See https://docs.rootly.com/edge-connectors-installation
+    {{- end }}
+{{- end }}

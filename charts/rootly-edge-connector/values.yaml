@@ -1,0 +1,143 @@
+replicaCount: 1
+
+image:
+  repository: rootlyhub/rootly-edge-connector
+  # Overrides the image tag whose default is the chart appVersion
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- Rootly API configuration
+rootly:
+  # -- API key (format: rec_xxxxx). Creates a Secret if set.
+  apiKey: ""
+  # -- Use an existing Secret instead of creating one
+  existingSecret: ""
+  # -- Key within the existing Secret that contains the API key
+  secretKey: "api-key"
+  # -- Rootly Edge Connector API URL
+  apiUrl: "https://rec.rootly.com"
+  # -- API path prefix
+  apiPath: "/v1"
+
+# -- Poller configuration
+poller:
+  pollingWaitIntervalMs: 5000
+  visibilityTimeoutSec: 30
+  maxNumberOfMessages: 10
+  retryOnError: true
+  retryBackoff: "exponential"
+  maxRetries: 3
+
+# -- Worker pool configuration
+pool:
+  maxNumberOfWorkers: 10
+  minNumberOfWorkers: 2
+  queueSize: 1000
+  keepAliveTimeMs: 60000
+  monitoringPeriodMs: 30000
+
+# -- Security settings for script execution
+security:
+  scriptTimeout: 300
+  allowedScriptPaths: []
+  globalEnv: {}
+
+# -- Logging configuration
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+
+# -- Prometheus metrics configuration
+metrics:
+  enabled: true
+  port: 9090
+  path: "/metrics"
+  labels: {}
+  service:
+    enabled: true
+    annotations: {}
+  serviceMonitor:
+    enabled: false
+    interval: "30s"
+    scrapeTimeout: "10s"
+    additionalLabels: {}
+
+# -- Actions configuration (raw YAML string)
+# Define your actions here as a raw YAML string.
+# This is a raw string to avoid Helm interpreting Rootly's {{ }} template syntax.
+# See actions.example.yml for format.
+# Example:
+#   actionsYaml: |
+#     defaults:
+#       timeout: 30
+#       source_type: local
+#     on:
+#       alert.created:
+#         http:
+#           url: "https://example.com/webhook"
+#           method: POST
+#           headers:
+#             Content-Type: application/json
+#           body: |
+#             {
+#               "alert_id": "{{ id }}",
+#               "summary": "{{ summary }}"
+#             }
+actionsYaml: ""
+
+# -- Use an existing ConfigMap for actions instead of inline
+existingActionsConfigMap: ""
+
+# -- Extra environment variables
+extraEnv: []
+# - name: MY_VAR
+#   value: "my-value"
+
+# -- Extra volume mounts (e.g., for custom scripts)
+extraVolumeMounts: []
+# - name: scripts
+#   mountPath: /opt/rootly-edge-connector/scripts
+
+# -- Extra volumes
+extraVolumes: []
+# - name: scripts
+#   configMap:
+#     name: my-scripts
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
