@@ -74,6 +74,27 @@ brew install rootlyhq/tap/rootly-edge-connector
 
 The binary will be available as `rootly-edge-connector` in your PATH.
 
+#### Kubernetes (Helm)
+
+```bash
+# Add the Rootly Helm repository
+helm repo add rootly https://rootlyhq.github.io/helm-charts
+helm repo update
+
+# Install with API key and actions
+helm install rootly-edge-connector rootly/rootly-edge-connector \
+  --set rootly.apiKey=rec_your_api_key \
+  --set-file actionsYaml=actions.yml
+
+# Or using an existing Kubernetes secret
+kubectl create secret generic rootly-api-key --from-literal=api-key=rec_your_api_key
+helm install rootly-edge-connector rootly/rootly-edge-connector \
+  --set rootly.existingSecret=rootly-api-key \
+  --set-file actionsYaml=actions.yml
+```
+
+See the [Helm chart documentation](https://github.com/rootlyhq/helm-charts/tree/master/charts/rootly-edge-connector) for all configuration options.
+
 #### Systemd Installation (Linux)
 
 For production Linux deployments with systemd:
@@ -884,6 +905,18 @@ environment:
   - REC_API_KEY=${REC_API_KEY}
   - REC_LOG_FORMAT_TYPE=json
   - REC_LOG_LEVEL=info
+```
+
+**Kubernetes (Helm):**
+
+```yaml
+# values.yaml
+rootly:
+  apiKey: rec_xxx
+  apiUrl: "https://rec.rootly.com"
+logging:
+  level: "info"
+  format: "json"
 ```
 
 **Systemd:**
