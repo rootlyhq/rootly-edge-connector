@@ -3,7 +3,7 @@
 # Multi-stage build optimized for development with live reloading
 
 # Base stage - dependencies and setup
-FROM golang:1.24-alpine AS base
+FROM golang:1.26-alpine AS base
 
 # Install development tools and runtime dependencies
 RUN apk update && \
