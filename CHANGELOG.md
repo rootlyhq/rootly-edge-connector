@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-10-21
+
+### Security
+- Patch CVE-2026-111943 (compromised eMudhra CA): build with Go 1.26.10, whose `crypto/x509` rejects the compromised emSign intermediate CAs
+
 ## [0.0.3] - 2026-01-16
 
 ### Fixed
